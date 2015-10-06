@@ -199,6 +199,14 @@ i_diy           sumnc   r_yi, #1                        ' dey(clear)/iny(set)
                 and     r_yi, #$FF wz
                 jmp     #f_updy
 
+i_tsx           mov     r_xi, r_sp                      ' do flag update                        (**)
+                and     r_xi, #$FF wz
+                jmp     #f_updx
+                
+i_txs           andn    r_sp, #$FF                      ' no flag update                        (**)
+                or      r_sp, r_xi
+                jmp     #rd_n{ext}
+
 
 i_bmi           test    r_st, #F_N wc
         if_nc   jmp     #rd_n{ext}
@@ -458,7 +466,7 @@ mapping         nop                                     ' 00
 
                 jmp     #i_tya                          ' 98    tya
                 nop                                     ' 99
-                nop                                     ' 9A
+                jmp     #i_txs                          ' 9A    txs
                 nop                                     ' 9B
                 nop                                     ' 9C
                 jmpret  i_sta, #o_absx nr               ' 9D    absolute,x      sta $1234,x
@@ -494,7 +502,7 @@ mapping         nop                                     ' 00
 
                 nop                                     ' B8
                 nop                                     ' B9
-                nop                                     ' BA
+                jmp     #i_tsx                          ' BA    tsx
                 nop                                     ' BB
                 nop                                     ' BC
                 jmpret  i_lda, #o_absx nr               ' BD    absolute,x      lda $4400,x
