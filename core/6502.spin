@@ -183,14 +183,14 @@ i_txa           mov     r_ac, r_xi wz
                 test    r_ac, #$80 wc
                 jmp     #f_upd{ate}
 
-i_dex           sub     r_xi, #1
-                and     r_xi, #$FF wz
-                jmp     #f_updx
-
-i_and           rdbyte  tmpc, oadr
+i_and           rdbyte  tmpc, oadr                      ' fetch mask
                 and     r_ac, tmpc wz
                 test    r_ac, #$80 wc
                 jmp     #f_upd{ate}
+
+i_dex           sub     r_xi, #1
+                and     r_xi, #$FF wz
+                jmp     #f_updx
                 
 
 i_bmi           test    r_st, #F_N wc
