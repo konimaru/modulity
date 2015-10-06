@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
 '' Last modified: 2015/10/06
-''       Version: 0.7
+''       Version: 0.8
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
@@ -18,7 +18,7 @@ CON
 OBJ
   serial: "FullDuplexSerial"
   
-PUB main | mbox[res_m]
+PUB main : n| mbox[res_m]
 
   init(-1, @mbox{0})
   serial.start(31, 30, %0000, 115200)
@@ -31,17 +31,21 @@ PUB main | mbox[res_m]
   repeat
   while mbox{0} < 0                                     ' startup complete
 
-  mbox{0} := NEGX|@wrapper
   repeat
-  while mbox{0} < 0
+    mbox{0} := NEGX|@wrapper
+    repeat
+    while mbox{0} < 0
+    n++
+  until mbox.word{0} <> @w_end
 
   dira[16..23]~~
   outa[16..23] := mbox.byte[2]
 
   println(mbox{0})
+  println(n)
   dump(mbox{0}-32)
   serial.tx(13)
-  dump($7000)
+  dump($7280)
   serial.tx(13)
   dump($7F00)
   
@@ -66,7 +70,7 @@ DAT     byte    $FF[256]
 
 wrapper byte    $6C, $33, $01, $35, $01
         byte    $20, word ENTRY
-        byte    $00
+w_end   byte    $00
         
 DAT     long    'newtest2-7000.bin'
 sid     file    "newtest2-7000.bin"
@@ -129,6 +133,10 @@ o_ind           call    #rd_w{ord}
                 
 o_absx          call    #rd_w{ord}
                 add     oadr, r_xi
+                jmp     #link                           ' process insn
+
+o_absy          call    #rd_w{ord}
+                add     oadr, r_yi
                 jmp     #link                           ' process insn
                 
 o_abs           call    #rd_w{ord}
@@ -195,6 +203,10 @@ i_and           rdbyte  tmpc, oadr                      ' fetch mask
                 and     r_ac, tmpc wz
                 jmp     #f_upda
 
+i_ora           rdbyte  tmpc, oadr                      ' fetch mask
+                or      r_ac, tmpc wz
+                jmp     #f_upda
+
 i_dix           sumnc   r_xi, #1                        ' dex(clear)/inx(set)
                 and     r_xi, #$FF wz
                 jmp     #f_updx
@@ -211,6 +223,12 @@ i_txs           andn    r_sp, #$FF                      ' no flag update        
                 or      r_sp, r_xi
                 jmp     #rd_n{ext}
 
+i_dec           rdbyte  tmpc, oadr
+                sub     tmpc, #1
+                test    tmpc, #$80 wc
+                wrbyte  tmpc, oadr wz
+                jmp     #f_upd{ate}
+                
 
 i_bmi           test    r_st, #F_N wc
         if_nc   jmp     #rd_n{ext}
@@ -221,6 +239,14 @@ f_rel{ative}    rdbyte  tmpc, oadr
                 jmp     #rd_n{ext}
 
 i_bpl           test    r_st, #F_N wc
+        if_nc   jmp     #f_rel{ative}
+                jmp     #rd_n{ext}
+
+i_beq           test    r_st, #F_Z wc
+        if_c    jmp     #f_rel{ative}
+                jmp     #rd_n{ext}
+
+i_bne           test    r_st, #F_Z wc
         if_nc   jmp     #f_rel{ative}
                 jmp     #rd_n{ext}
 
@@ -239,7 +265,6 @@ pull_ret        ret
 ' initialised data and/or presets
 
 stat            long    +2                              ' status location
-pmap            long    -256                            ' page map
 
 r_sp            long    $7FFF                           ' page must be 2n+1                     (##)
 r_ac            long    $00
@@ -250,8 +275,7 @@ r_st            long    F_F|F_B                         ' we only have 6 effecti
 ' Stuff below is re-purposed for temporary storage.
 
 setup           rdlong  base, par wz                    '  +0 =                                 (%%)
-                add     pmap, base                      '  +8
-                add     stat, par                       '  -4
+                add     stat, par                       '  +8
         if_nz   wrlong  zero, par                       '  +0 =
 
                 jmp     %%0                             ' return
@@ -293,10 +317,6 @@ CON
   
 DAT
 
-                byte    0[256]
-                
-DAT
-
 mapping         nop                                     ' 00
                 nop                                     ' 01
                 nop                                     ' 02
@@ -307,7 +327,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 07
 
                 nop                                     ' 08
-                nop                                     ' 09
+                jmpret  i_ora, #o_imm nr                ' 09    immediate       ora #$12
                 nop                                     ' 0A
                 nop                                     ' 0B
                 nop                                     ' 0C
@@ -315,7 +335,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 0E
                 nop                                     ' 0F
 
-                jmpret  i_bpl, #o_imm nr                ' 10    relative        bpl $12
+                jmpret  i_bpl, #o_imm nr                ' 10    relative        bpl $1234
                 nop                                     ' 11
                 nop                                     ' 12
                 nop                                     ' 13
@@ -351,7 +371,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 2E
                 nop                                     ' 2F
 
-                jmpret  i_bmi, #o_imm nr                ' 30    relative        bmi $12
+                jmpret  i_bmi, #o_imm nr                ' 30    relative        bmi $1234
                 nop                                     ' 31
                 nop                                     ' 32
                 nop                                     ' 33
@@ -405,7 +425,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 5E
                 nop                                     ' 5F
 
-                jmp     #i_rts                          ' 60    rts
+                jmp     #i_rts                          ' 60                    rts
                 nop                                     ' 61
                 nop                                     ' 62
                 nop                                     ' 63
@@ -450,9 +470,9 @@ mapping         nop                                     ' 00
                 nop                                     ' 86
                 nop                                     ' 87
 
-                jmpret  exec, #i_diy wc,nr              ' 88    dey (carry clear)
+                jmpret  exec, #i_diy wc,nr              ' 88                    dey (carry clear)
                 nop                                     ' 89
-                jmp     #i_txa                          ' 8A    txa
+                jmp     #i_txa                          ' 8A                    txa
                 nop                                     ' 8B
                 nop                                     ' 8C
                 jmpret  i_sta, #o_abs nr                ' 8D    absolute        sta $4400
@@ -468,9 +488,9 @@ mapping         nop                                     ' 00
                 nop                                     ' 96
                 nop                                     ' 97
 
-                jmp     #i_tya                          ' 98    tya
+                jmp     #i_tya                          ' 98                    tya
                 nop                                     ' 99
-                jmp     #i_txs                          ' 9A    txs
+                jmp     #i_txs                          ' 9A                    txs
                 nop                                     ' 9B
                 nop                                     ' 9C
                 jmpret  i_sta, #o_absx nr               ' 9D    absolute,x      sta $1234,x
@@ -486,9 +506,9 @@ mapping         nop                                     ' 00
                 nop                                     ' A6
                 nop                                     ' A7
 
-                jmp     #i_tay                          ' A8    tay
+                jmp     #i_tay                          ' A8                    tay
                 jmpret  i_lda, #o_imm nr                ' A9    immediate       lda #$34
-                jmp     #i_tax                          ' AA    tax
+                jmp     #i_tax                          ' AA                    tax
                 nop                                     ' AB
                 nop                                     ' AC
                 nop                                     ' AD
@@ -505,10 +525,10 @@ mapping         nop                                     ' 00
                 nop                                     ' B7
 
                 nop                                     ' B8
-                nop                                     ' B9
-                jmp     #i_tsx                          ' BA    tsx
+                jmpret  i_lda, #o_absy nr               ' B9    absolute,y      lda $4400,y
+                jmp     #i_tsx                          ' BA                    tsx
                 nop                                     ' BB
-                nop                                     ' BC
+                jmpret  i_ldy, #o_absx nr               ' BC    absolute,x      ldy $4400,x
                 jmpret  i_lda, #o_absx nr               ' BD    absolute,x      lda $4400,x
                 nop                                     ' BE
                 nop                                     ' BF
@@ -522,16 +542,16 @@ mapping         nop                                     ' 00
                 nop                                     ' C6
                 nop                                     ' C7
 
-                jmpret  zero, #i_diy wc,nr              ' C8    iny (carry set)
+                jmpret  zero, #i_diy wc,nr              ' C8                    iny (carry set)
                 nop                                     ' C9
-                jmpret  exec, #i_dix wc,nr              ' CA    dex (carry clear)
+                jmpret  exec, #i_dix wc,nr              ' CA                    dex (carry clear)
                 nop                                     ' CB
                 nop                                     ' CC
                 nop                                     ' CD
                 nop                                     ' CE
                 nop                                     ' CF
 
-                nop                                     ' D0
+                jmpret  i_bne, #o_imm nr                ' D0    relative        bne $1234
                 nop                                     ' D1
                 nop                                     ' D2
                 nop                                     ' D3
@@ -546,7 +566,7 @@ mapping         nop                                     ' 00
                 nop                                     ' DB
                 nop                                     ' DC
                 nop                                     ' DD
-                nop                                     ' DE
+                jmpret  i_dec, #o_absx nr               ' DE    absolute.x      dec $1234,x
                 nop                                     ' DF
 
                 nop                                     ' E0
@@ -558,16 +578,16 @@ mapping         nop                                     ' 00
                 nop                                     ' E6
                 nop                                     ' E7
 
-                jmpret  zero, #i_dix wc,nr              ' E8    inx (carry set)
+                jmpret  zero, #i_dix wc,nr              ' E8                    inx (carry set)
                 nop                                     ' E9
-                jmp     #rd_n{ext}                      ' EA    nop
+                jmp     #rd_n{ext}                      ' EA                    nop
                 nop                                     ' EB
                 nop                                     ' EC
                 nop                                     ' ED
                 nop                                     ' EE
                 nop                                     ' EF
 
-                nop                                     ' F0
+                jmpret  i_beq, #o_imm nr                ' F0    relative        beq $1234
                 nop                                     ' F1
                 nop                                     ' F2
                 nop                                     ' F3
