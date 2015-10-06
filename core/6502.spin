@@ -45,7 +45,7 @@ PUB main : n| mbox[res_m]
   println(n)
   dump(mbox{0}-32)
   serial.tx(13)
-  dump($7280)
+  dump($0000)
   serial.tx(13)
   dump($7F00)
   
@@ -143,6 +143,10 @@ o_abs           call    #rd_w{ord}
                 jmp     #link                           ' process insn
 
 o_imm           mov     oadr, addr
+                add     addr, #1
+                jmp     #link                           ' process insn
+
+o_zpg           rdbyte  oadr, addr
                 add     addr, #1
                 jmp     #link                           ' process insn
                 
@@ -466,7 +470,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 82
                 nop                                     ' 83
                 nop                                     ' 84
-                nop                                     ' 85
+                jmpret  i_sta, #o_zpg nr                ' 85    zeropage        sta $12
                 nop                                     ' 86
                 nop                                     ' 87
 
