@@ -162,43 +162,42 @@ i_stx           wrbyte  r_xi, oadr                      ' transfer index registe
 
 
 i_lda           rdbyte  r_ac, oadr wz                   ' fetch immediate value
-                test    r_ac, #$80 wc
-                jmp     #f_upd{ate}
-                
-i_ldx           rdbyte  r_xi, oadr wz                   ' fetch immediate value
-f_updx          test    r_xi, #$80 wc
+f_upda          test    r_ac, #$80 wc
 f_upd{ate}      muxz    r_st, #F_Z
                 muxc    r_st, #F_N
                 jmp     #rd_n{ext}
+                
+i_ldx           rdbyte  r_xi, oadr wz                   ' fetch immediate value
+f_updx          test    r_xi, #$80 wc
+                jmp     #f_upd{ate}
 
 i_ldy           rdbyte  r_yi, oadr wz                   ' fetch immediate value
-                test    r_yi, #$80 wc
+f_updy          test    r_yi, #$80 wc
                 jmp     #f_upd{ate}
 
 i_tax           mov     r_xi, r_ac wz
-                test    r_xi, #$80 wc
-                jmp     #f_upd{ate}
+                jmp     #f_updx
                 
 i_txa           mov     r_ac, r_xi wz
-                test    r_ac, #$80 wc
-                jmp     #f_upd{ate}
+                jmp     #f_upda
 
 i_tay           mov     r_yi, r_ac wz
-                test    r_yi, #$80 wc
-                jmp     #f_upd{ate}
+                jmp     #f_updy
                 
 i_tya           mov     r_ac, r_yi wz
-                test    r_ac, #$80 wc
-                jmp     #f_upd{ate}
+                jmp     #f_upda
 
 i_and           rdbyte  tmpc, oadr                      ' fetch mask
                 and     r_ac, tmpc wz
-                test    r_ac, #$80 wc
-                jmp     #f_upd{ate}
+                jmp     #f_upda
 
 i_dix           sumnc   r_xi, #1                        ' dex(clear)/inx(set)
                 and     r_xi, #$FF wz
                 jmp     #f_updx
+
+i_diy           sumnc   r_yi, #1                        ' dey(clear)/iny(set)
+                and     r_yi, #$FF wz
+                jmp     #f_updy
 
 
 i_bmi           test    r_st, #F_N wc
@@ -439,7 +438,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 86
                 nop                                     ' 87
 
-                nop                                     ' 88
+                jmpret  exec, #i_diy wc,nr              ' 88    dey (carry clear)
                 nop                                     ' 89
                 jmp     #i_txa                          ' 8A    txa
                 nop                                     ' 8B
@@ -511,7 +510,7 @@ mapping         nop                                     ' 00
                 nop                                     ' C6
                 nop                                     ' C7
 
-                nop                                     ' C8
+                jmpret  zero, #i_diy wc,nr              ' C8    iny (carry set)
                 nop                                     ' C9
                 jmpret  exec, #i_dix wc,nr              ' CA    dex (carry clear)
                 nop                                     ' CB
