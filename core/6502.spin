@@ -196,10 +196,10 @@ i_and           rdbyte  tmpc, oadr                      ' fetch mask
                 test    r_ac, #$80 wc
                 jmp     #f_upd{ate}
 
-i_dex           sub     r_xi, #1
+i_dix           sumnc   r_xi, #1                        ' dex(clear)/inx(set)
                 and     r_xi, #$FF wz
                 jmp     #f_updx
-                
+
 
 i_bmi           test    r_st, #F_N wc
         if_nc   jmp     #rd_n{ext}
@@ -513,7 +513,7 @@ mapping         nop                                     ' 00
 
                 nop                                     ' C8
                 nop                                     ' C9
-                jmp     #i_dex                          ' CA    dex
+                jmpret  exec, #i_dix wc,nr              ' CA    dex (carry clear)
                 nop                                     ' CB
                 nop                                     ' CC
                 nop                                     ' CD
@@ -547,7 +547,7 @@ mapping         nop                                     ' 00
                 nop                                     ' E6
                 nop                                     ' E7
 
-                nop                                     ' E8
+                jmpret  zero, #i_dix wc,nr              ' E8    inx (carry set)
                 nop                                     ' E9
                 jmp     #rd_n{ext}                      ' EA    nop
                 nop                                     ' EB
