@@ -183,6 +183,14 @@ i_txa           mov     r_ac, r_xi wz
                 test    r_ac, #$80 wc
                 jmp     #f_upd{ate}
 
+i_tay           mov     r_yi, r_ac wz
+                test    r_yi, #$80 wc
+                jmp     #f_upd{ate}
+                
+i_tya           mov     r_ac, r_yi wz
+                test    r_ac, #$80 wc
+                jmp     #f_upd{ate}
+
 i_and           rdbyte  tmpc, oadr                      ' fetch mask
                 and     r_ac, tmpc wz
                 test    r_ac, #$80 wc
@@ -449,7 +457,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 96
                 nop                                     ' 97
 
-                nop                                     ' 98
+                jmp     #i_tya                          ' 98    tya
                 nop                                     ' 99
                 nop                                     ' 9A
                 nop                                     ' 9B
@@ -467,7 +475,7 @@ mapping         nop                                     ' 00
                 nop                                     ' A6
                 nop                                     ' A7
 
-                nop                                     ' A8
+                jmp     #i_tay                          ' A8    tay
                 jmpret  i_lda, #o_imm nr                ' A9    immediate       lda #$34
                 jmp     #i_tax                          ' AA    tax
                 nop                                     ' AB
