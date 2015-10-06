@@ -1,6 +1,6 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/05
+'' Last modified: 2015/10/06
 ''       Version: 0.6
 ''
 CON
