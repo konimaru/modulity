@@ -379,11 +379,11 @@ mapping         nop                                     ' 00
                 nop                                     ' 27
 
                 nop                                     ' 28
-                nop                                     ' 29
+                jmpret  i_and, #o_imm nr                ' 29    immediate       and #$44
                 nop                                     ' 2A
                 nop                                     ' 2B
                 nop                                     ' 2C
-                nop                                     ' 2D
+                jmpret  i_and, #o_abs nr                ' 2D    absolute        and $4400
                 nop                                     ' 2E
                 nop                                     ' 2F
 
@@ -397,7 +397,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 37
 
                 nop                                     ' 38
-                nop                                     ' 39
+                jmpret  i_and, #o_absy nr               ' 39    absolute,y      and $4400,y
                 nop                                     ' 3A
                 nop                                     ' 3B
                 nop                                     ' 3C
