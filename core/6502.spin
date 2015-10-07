@@ -284,9 +284,11 @@ i_sla           rcl     r_ac, #1                        '       carry clear when
                 and     r_ac, #$FF wz                   '       Z
                 jmp     #f_upda                         '       N
 
+i_rra           test    r_st, #F_C wc                   '       |
+                muxc    r_ac, #$100                     '       transfer carry
 i_sra           lsr     r_ac, #1 wc,wz                  '       C,Z
                 muxc    r_st, #F_C                      '       capture bit 0
-                jmpret  $, #f_upd{ate} wc,nr            '       N
+                jmp     #f_upda                         '       N
 
 i_rlm           test    r_st, #F_C wc                   '       transfer carry
 i_slm           rdbyte  tmpc, oadr                      '  +0 = carry clear when used
@@ -526,7 +528,7 @@ mapping         nop                                     ' 00
 
                 nop                                     ' 68
                 nop                                     ' 69
-                nop                                     ' 6A
+                jmp     #i_rra                          ' 6A                    ror a
                 nop                                     ' 6B
                 jmpret  i_jmp, #o_ind nr                ' 6C    indirect        jmp ($4400)
                 nop                                     ' 6D
