@@ -214,6 +214,10 @@ i_ora           rdbyte  tmpc, oadr                      ' fetch mask
                 or      r_ac, tmpc wz
                 jmp     #f_upda
 
+i_eor           rdbyte  tmpc, oadr                      ' fetch mask
+                xor     r_ac, tmpc wz
+                jmp     #f_upda
+
 i_dix           sumnc   r_xi, #1                        ' dex(clear)/inx(set)
                 and     r_xi, #$FF wz
                 jmp     #f_updx
@@ -410,16 +414,16 @@ mapping         nop                                     ' 00
                 nop                                     ' 42
                 nop                                     ' 43
                 nop                                     ' 44
-                nop                                     ' 45
+                jmpret  i_eor, #o_zpg nr                ' 45    zeropage        eor $44
                 nop                                     ' 46
                 nop                                     ' 47
 
                 nop                                     ' 48
-                nop                                     ' 49
+                jmpret  i_eor, #o_imm nr                ' 49    immediate       eor #$44
                 nop                                     ' 4A
                 nop                                     ' 4B
                 jmpret  i_jmp, #o_abs nr                ' 4C    absolute        jmp $4400
-                nop                                     ' 4D
+                jmpret  i_eor, #o_abs nr                ' 4D    absolute        eor $4400
                 nop                                     ' 4E
                 nop                                     ' 4F
 
@@ -433,11 +437,11 @@ mapping         nop                                     ' 00
                 nop                                     ' 57
 
                 nop                                     ' 58
-                nop                                     ' 59
+                jmpret  i_eor, #o_absy nr               ' 59    absolute,y      eor $4400,y
                 nop                                     ' 5A
                 nop                                     ' 5B
                 nop                                     ' 5C
-                nop                                     ' 5D
+                jmpret  i_eor, #o_absx nr               ' 5D    absolute,x      eor $4400,x
                 nop                                     ' 5E
                 nop                                     ' 5F
 
