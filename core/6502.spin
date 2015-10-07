@@ -338,7 +338,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 02
                 nop                                     ' 03
                 nop                                     ' 04
-                nop                                     ' 05
+                jmpret  i_ora, #o_zpg nr                ' 05    zeropage        ora $44
                 nop                                     ' 06
                 nop                                     ' 07
 
@@ -347,7 +347,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 0A
                 nop                                     ' 0B
                 nop                                     ' 0C
-                nop                                     ' 0D
+                jmpret  i_ora, #o_abs nr                ' 0D    absolute        ora $4400
                 nop                                     ' 0E
                 nop                                     ' 0F
 
@@ -361,11 +361,11 @@ mapping         nop                                     ' 00
                 nop                                     ' 17
 
                 nop                                     ' 18
-                nop                                     ' 19
+                jmpret  i_ora, #o_absy nr               ' 19    absolute,y      ora $4400,y
                 nop                                     ' 1A
                 nop                                     ' 1B
                 nop                                     ' 1C
-                nop                                     ' 1D
+                jmprer  i_ora, #o_absx nr               ' 1D    absolute,x      ora $4400,x
                 nop                                     ' 1E
                 nop                                     ' 1F
 
@@ -374,7 +374,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 22
                 nop                                     ' 23
                 nop                                     ' 24
-                nop                                     ' 25
+                jmpret  i_and, #o_zpg nr                ' 25    zeropage        and $44
                 nop                                     ' 26
                 nop                                     ' 27
 
