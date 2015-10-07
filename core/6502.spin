@@ -277,6 +277,30 @@ i_dec           rdbyte  tmpc, oadr
                 wrbyte  tmpc, oadr wz
                 jmp     #f_upd{ate}
 
+i_sla           lsl     r_ac, #1
+                test    r_ac, #$100 wc                  '       C
+                muxc    r_st, #F_C                      '       capture bit 7
+                and     r_ac, #$FF wz                   '       Z
+                jmp     #f_upda                         '       N
+
+i_sra           lsr     r_ac, #1 wc,wz                  '       C,Z
+                muxc    r_st, #F_C                      '       capture bit 0
+                jmpret  $, #f_upd{ate} wc,nr            '       N
+                
+i_slm           rdbyte  tmpc, oadr                      '  +0 =
+                lsl     tmpc, #1                        '  +8
+                test    tmpc, #$100 wc                  '  -4   C
+                wrbyte  tmpc, oadr wz                   '  +0 = Z
+                muxc    r_st, #F_C                      '       capture bit 7
+                test    tmpc, #$80 wc                   '       N
+                jmp     #f_upd{ate}
+                
+i_srm           rdbyte  tmpc, oadr                      '  +0 =
+                lsr     tmpc, #1 wc,wz                  '  +8   C,Z
+                muxc    r_st, #F_C                      '  -4   capture bit 0
+                wrbyte  tmpc, oadr                      '  +0 =
+                jmpret  $, #f_upd{ate} wc,nr            '       N
+
 
 i_bmi           test    r_st, #F_N wc
         if_nc   jmp     #rd_n{ext}
@@ -387,16 +411,16 @@ mapping         nop                                     ' 00
                 nop                                     ' 03
                 nop                                     ' 04
                 jmpret  i_ora, #o_zpg nr                ' 05    zeropage        ora $44
-                nop                                     ' 06
+                jmpret  i_slm, #o_zpg nr                ' 06    zeropage        asl $44
                 nop                                     ' 07
 
                 nop                                     ' 08
                 jmpret  i_ora, #o_imm nr                ' 09    immediate       ora #$44
-                nop                                     ' 0A
+                jmp     #i_sla                          ' 0A                    asl a
                 nop                                     ' 0B
                 nop                                     ' 0C
                 jmpret  i_ora, #o_abs nr                ' 0D    absolute        ora $4400
-                nop                                     ' 0E
+                jmpret  i_slm, #o_abs nr                ' 0E    absolute        asl $4400
                 nop                                     ' 0F
 
                 jmpret  i_bpl, #o_imm nr                ' 10    relative        bpl $4400
@@ -405,7 +429,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 13
                 nop                                     ' 14
                 jmpret  i_ora, #o_zpgx nr               ' 15    zeropage,x      ora $44,x
-                nop                                     ' 16
+                jmpret  i_slm, #o_zpgx nr               ' 16    zeropage,x      asl $44,x
                 nop                                     ' 17
 
                 nop                                     ' 18
@@ -413,8 +437,8 @@ mapping         nop                                     ' 00
                 nop                                     ' 1A
                 nop                                     ' 1B
                 nop                                     ' 1C
-                jmprer  i_ora, #o_absx nr               ' 1D    absolute,x      ora $4400,x
-                nop                                     ' 1E
+                jmpret  i_ora, #o_absx nr               ' 1D    absolute,x      ora $4400,x
+                jmpret  i_slm, #o_absx nr               ' 1E    absolute,x      asl $4400,x
                 nop                                     ' 1F
 
                 jmpret  i_jsr, #o_abs nr                ' 20    absolute        jsr $4400
@@ -459,16 +483,16 @@ mapping         nop                                     ' 00
                 nop                                     ' 43
                 nop                                     ' 44
                 jmpret  i_eor, #o_zpg nr                ' 45    zeropage        eor $44
-                nop                                     ' 46
+                jmpret  i_srm, #o_zpg nr                ' 46    zeropage        lsr $44
                 nop                                     ' 47
 
                 nop                                     ' 48
                 jmpret  i_eor, #o_imm nr                ' 49    immediate       eor #$44
-                nop                                     ' 4A
+                jmp     #i_sra                          ' 4A                    lsr a
                 nop                                     ' 4B
                 jmpret  i_jmp, #o_abs nr                ' 4C    absolute        jmp $4400
                 jmpret  i_eor, #o_abs nr                ' 4D    absolute        eor $4400
-                nop                                     ' 4E
+                jmpret  i_srm, #o_abs nr                ' 4E    absolute        lsr $4400
                 nop                                     ' 4F
 
                 jmpret  i_bvc, #o_imm nr                ' 50    relative        bvc $4400
@@ -477,7 +501,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 53
                 nop                                     ' 54
                 jmpret  i_eor, #o_zpgx nr               ' 55    zeropage,x      eor $44,x
-                nop                                     ' 56
+                jmpret  i_srm, #o_zpgx nr               ' 56    zeropage,x      lsr $44,x
                 nop                                     ' 57
 
                 nop                                     ' 58
@@ -486,7 +510,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 5B
                 nop                                     ' 5C
                 jmpret  i_eor, #o_absx nr               ' 5D    absolute,x      eor $4400,x
-                nop                                     ' 5E
+                jmpret  i_srm, #o_absx nr               ' 5E    absolute,x      lsr $4400,x
                 nop                                     ' 5F
 
                 jmp     #i_rts                          ' 60                    rts
