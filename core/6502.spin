@@ -277,7 +277,8 @@ i_dec           rdbyte  tmpc, oadr
                 wrbyte  tmpc, oadr wz
                 jmp     #f_upd{ate}
 
-i_sla           lsl     r_ac, #1
+i_rla           test    r_st, #F_C wc
+i_sla           rcl     r_ac, #1
                 test    r_ac, #$100 wc                  '       C
                 muxc    r_st, #F_C                      '       capture bit 7
                 and     r_ac, #$FF wz                   '       Z
@@ -416,7 +417,7 @@ mapping         nop                                     ' 00
 
                 nop                                     ' 08
                 jmpret  i_ora, #o_imm nr                ' 09    immediate       ora #$44
-                jmp     #i_sla                          ' 0A                    asl a
+                jmpret  exec, #i_sla wc,nr              ' 0A                    asl a           (carry clear)
                 nop                                     ' 0B
                 nop                                     ' 0C
                 jmpret  i_ora, #o_abs nr                ' 0D    absolute        ora $4400
@@ -452,7 +453,7 @@ mapping         nop                                     ' 00
 
                 nop                                     ' 28
                 jmpret  i_and, #o_imm nr                ' 29    immediate       and #$44
-                nop                                     ' 2A
+                jmp     #i_rla                          ' 2A                    rol a
                 nop                                     ' 2B
                 nop                                     ' 2C
                 jmpret  i_and, #o_abs nr                ' 2D    absolute        and $4400
@@ -558,7 +559,7 @@ mapping         nop                                     ' 00
                 jmpret  i_stx, #o_zpg nr                ' 86    zeropage        stx $44
                 nop                                     ' 87
 
-                jmpret  exec, #i_diy wc,nr              ' 88                    dey (carry clear)
+                jmpret  exec, #i_diy wc,nr              ' 88                    dey             (carry clear)
                 nop                                     ' 89
                 jmp     #i_txa                          ' 8A                    txa
                 nop                                     ' 8B
@@ -627,16 +628,16 @@ mapping         nop                                     ' 00
                 nop                                     ' C3
                 nop                                     ' C4
                 nop                                     ' C5
-                jmpret  i_dec, #o_zpg nr                ' C6    zeropage        dec $44
+                jmpret  i_dec, #o_zpg wc,nr             ' C6    zeropage        dec $44         (carry clear)
                 nop                                     ' C7
 
-                jmpret  zero, #i_diy wc,nr              ' C8                    iny (carry set)
+                jmpret  zero, #i_diy wc,nr              ' C8                    iny             (carry set)
                 nop                                     ' C9
-                jmpret  exec, #i_dix wc,nr              ' CA                    dex (carry clear)
+                jmpret  exec, #i_dix wc,nr              ' CA                    dex             (carry clear)
                 nop                                     ' CB
                 nop                                     ' CC
                 nop                                     ' CD
-                jmpret  i_dec, #o_abs wc,nr             ' CE    absolute        dec $4400 (carry clear)
+                jmpret  i_dec, #o_abs wc,nr             ' CE    absolute        dec $4400       (carry clear)
                 nop                                     ' CF
 
                 jmpret  i_bne, #o_imm nr                ' D0    relative        bne $4400
@@ -645,7 +646,7 @@ mapping         nop                                     ' 00
                 nop                                     ' D3
                 nop                                     ' D4
                 nop                                     ' D5
-                jmpret  i_dec, #o_zpgx nr               ' D6    zeropage,x      dec $44,x
+                jmpret  i_dec, #o_zpgx wc,nr            ' D6    zeropage,x      dec $44,x       (carry clear)
                 nop                                     ' D7
 
                 nop                                     ' D8
@@ -654,7 +655,7 @@ mapping         nop                                     ' 00
                 nop                                     ' DB
                 nop                                     ' DC
                 nop                                     ' DD
-                jmpret  i_dec, #o_absx wc,nr            ' DE    absolute.x      dec $4400,x (carry clear)
+                jmpret  i_dec, #o_absx wc,nr            ' DE    absolute.x      dec $4400,x     (carry clear)
                 nop                                     ' DF
 
                 nop                                     ' E0
@@ -666,7 +667,7 @@ mapping         nop                                     ' 00
                 jmpret  i_inc, #o_zpg nr                ' E6    zeropage        inc $44
                 nop                                     ' E7
 
-                jmpret  zero, #i_dix wc,nr              ' E8                    inx (carry set)
+                jmpret  zero, #i_dix wc,nr              ' E8                    inx             (carry set)
                 nop                                     ' E9
                 jmp     #rd_n{ext}                      ' EA                    nop
                 nop                                     ' EB
