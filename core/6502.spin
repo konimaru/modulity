@@ -299,11 +299,13 @@ i_slm           rdbyte  tmpc, oadr                      '  +0 = carry clear when
                 test    tmpc, #$80 wc                   '       N
                 jmp     #f_upd{ate}
                 
-i_srm           rdbyte  tmpc, oadr                      '  +0 =
-                lsr     tmpc, #1 wc,wz                  '  +8   C,Z
-                muxc    r_st, #F_C                      '  -4   capture bit 0
+i_rrm           test    r_st, #F_C wc
+i_srm           rdbyte  tmpc, oadr                      '  +0 = carry clear when used
+                muxc    tmpc, #$100                     '  +8   transfer carry
+                lsr     tmpc, #1 wc,wz                  '  -4   C,Z
                 wrbyte  tmpc, oadr                      '  +0 =
-                jmpret  $, #f_upd{ate} wc,nr            '       N
+                muxc    r_st, #F_C                      '       capture bit 0
+                jmp     #f_upda                         '       N
 
 
 i_bmi           test    r_st, #F_N wc
@@ -487,7 +489,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 43
                 nop                                     ' 44
                 jmpret  i_eor, #o_zpg nr                ' 45    zeropage        eor $44
-                jmpret  i_srm, #o_zpg nr                ' 46    zeropage        lsr $44
+                jmpret  i_srm, #o_zpg wc,nr             ' 46    zeropage        lsr $44         (carry clear)
                 nop                                     ' 47
 
                 nop                                     ' 48
@@ -496,7 +498,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 4B
                 jmpret  i_jmp, #o_abs nr                ' 4C    absolute        jmp $4400
                 jmpret  i_eor, #o_abs nr                ' 4D    absolute        eor $4400
-                jmpret  i_srm, #o_abs nr                ' 4E    absolute        lsr $4400
+                jmpret  i_srm, #o_abs wc,nr             ' 4E    absolute        lsr $4400       (carry clear)
                 nop                                     ' 4F
 
                 jmpret  i_bvc, #o_imm nr                ' 50    relative        bvc $4400
@@ -505,7 +507,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 53
                 nop                                     ' 54
                 jmpret  i_eor, #o_zpgx nr               ' 55    zeropage,x      eor $44,x
-                jmpret  i_srm, #o_zpgx nr               ' 56    zeropage,x      lsr $44,x
+                jmpret  i_srm, #o_zpgx wc,nr            ' 56    zeropage,x      lsr $44,x       (carry clear)
                 nop                                     ' 57
 
                 nop                                     ' 58
@@ -514,7 +516,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 5B
                 nop                                     ' 5C
                 jmpret  i_eor, #o_absx nr               ' 5D    absolute,x      eor $4400,x
-                jmpret  i_srm, #o_absx nr               ' 5E    absolute,x      lsr $4400,x
+                jmpret  i_srm, #o_absx wc,nr            ' 5E    absolute,x      lsr $4400,x     (carry clear)
                 nop                                     ' 5F
 
                 jmp     #i_rts                          ' 60                    rts
@@ -523,7 +525,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 63
                 nop                                     ' 64
                 nop                                     ' 65
-                nop                                     ' 66
+                jmpret  i_rrm, #o_zpg nr                ' 66    zeropage        ror $44
                 nop                                     ' 67
 
                 nop                                     ' 68
@@ -532,7 +534,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 6B
                 jmpret  i_jmp, #o_ind nr                ' 6C    indirect        jmp ($4400)
                 nop                                     ' 6D
-                nop                                     ' 6E
+                jmpret  i_rrm, #o_abs nr                ' 6E    absolute        ror $4400
                 nop                                     ' 6F
 
                 jmpret  i_bvs, #o_imm nr                ' 70    relative        bvs $4400
@@ -541,7 +543,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 73
                 nop                                     ' 74
                 nop                                     ' 75
-                nop                                     ' 76
+                jmpret  i_rrm, #o_zpgx nr               ' 76    zeropage,x      ror $44,x
                 nop                                     ' 77
 
                 nop                                     ' 78
@@ -550,7 +552,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 7B
                 nop                                     ' 7C
                 nop                                     ' 7D
-                nop                                     ' 7E
+                jmpret  i_rrm, #o_absx nr               ' 7E    absolute,x      ror $4400,x
                 nop                                     ' 7F
 
                 nop                                     ' 80
