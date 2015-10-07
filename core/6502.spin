@@ -176,7 +176,7 @@ o_indx          rdbyte  oadr, addr                      '  +0 = (zp,x)
 
 o_indy          rdbyte  oadr, addr                      '  +0 = (zp),y
                 add     addr, #1                        '  +8
-                shr     exec, #9 wz                     '  -4   in-place link [1/2]
+                shr     exec, #9                        '  -4   in-place link [1/2]
                 rdbyte  tmpc, oadr                      '  +0 = LSB
                 add     oadr, #1                        '  +8
                 and     oadr, #$FF                      '  -4
