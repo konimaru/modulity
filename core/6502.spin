@@ -176,6 +176,9 @@ i_sta           wrbyte  r_ac, oadr                      ' transfer accumulator t
 i_stx           wrbyte  r_xi, oadr                      ' transfer index register X to memory
                 jmp     #rd_n{ext}
 
+i_sty           wrbyte  r_yi, oadr                      ' transfer index register Y to memory
+                jmp     #rd_n{ext}
+
 
 i_lda           rdbyte  r_ac, oadr wz                   ' fetch immediate value
 f_upda          test    r_ac, #$80 wc
@@ -331,7 +334,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 07
 
                 nop                                     ' 08
-                jmpret  i_ora, #o_imm nr                ' 09    immediate       ora #$12
+                jmpret  i_ora, #o_imm nr                ' 09    immediate       ora #$44
                 nop                                     ' 0A
                 nop                                     ' 0B
                 nop                                     ' 0C
@@ -339,7 +342,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 0E
                 nop                                     ' 0F
 
-                jmpret  i_bpl, #o_imm nr                ' 10    relative        bpl $1234
+                jmpret  i_bpl, #o_imm nr                ' 10    relative        bpl $4400
                 nop                                     ' 11
                 nop                                     ' 12
                 nop                                     ' 13
@@ -357,7 +360,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 1E
                 nop                                     ' 1F
 
-                jmpret  i_jsr, #o_abs nr                ' 20    absolute        jsr $1234
+                jmpret  i_jsr, #o_abs nr                ' 20    absolute        jsr $4400
                 nop                                     ' 21
                 nop                                     ' 22
                 nop                                     ' 23
@@ -375,7 +378,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 2E
                 nop                                     ' 2F
 
-                jmpret  i_bmi, #o_imm nr                ' 30    relative        bmi $1234
+                jmpret  i_bmi, #o_imm nr                ' 30    relative        bmi $4400
                 nop                                     ' 31
                 nop                                     ' 32
                 nop                                     ' 33
@@ -406,7 +409,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 49
                 nop                                     ' 4A
                 nop                                     ' 4B
-                jmpret  i_jmp, #o_abs nr                ' 4C    absolute        jmp $1234
+                jmpret  i_jmp, #o_abs nr                ' 4C    absolute        jmp $4400
                 nop                                     ' 4D
                 nop                                     ' 4E
                 nop                                     ' 4F
@@ -442,7 +445,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 69
                 nop                                     ' 6A
                 nop                                     ' 6B
-                jmpret  i_jmp, #o_ind nr                ' 6C    indirect        jmp ($1234)
+                jmpret  i_jmp, #o_ind nr                ' 6C    indirect        jmp ($4400)
                 nop                                     ' 6D
                 nop                                     ' 6E
                 nop                                     ' 6F
@@ -470,7 +473,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 82
                 nop                                     ' 83
                 nop                                     ' 84
-                jmpret  i_sta, #o_zpg nr                ' 85    zeropage        sta $12
+                jmpret  i_sta, #o_zpg nr                ' 85    zeropage        sta $44
                 nop                                     ' 86
                 nop                                     ' 87
 
@@ -478,7 +481,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 89
                 jmp     #i_txa                          ' 8A                    txa
                 nop                                     ' 8B
-                nop                                     ' 8C
+                jmpret  i_sty, #o_abs nr                ' 8C    absolute        sty $4400
                 jmpret  i_sta, #o_abs nr                ' 8D    absolute        sta $4400
                 jmpret  i_stx, #o_abs nr                ' 8E    absolute        stx $4400
                 nop                                     ' 8F
@@ -497,13 +500,13 @@ mapping         nop                                     ' 00
                 jmp     #i_txs                          ' 9A                    txs
                 nop                                     ' 9B
                 nop                                     ' 9C
-                jmpret  i_sta, #o_absx nr               ' 9D    absolute,x      sta $1234,x
+                jmpret  i_sta, #o_absx nr               ' 9D    absolute,x      sta $4400,x
                 nop                                     ' 9E
                 nop                                     ' 9F
 
-                jmpret  i_ldy, #o_imm nr                ' A0    immediate       ldy #$23
+                jmpret  i_ldy, #o_imm nr                ' A0    immediate       ldy #$44
                 nop                                     ' A1
-                jmpret  i_ldx, #o_imm nr                ' A2    immediate       ldx #$12
+                jmpret  i_ldx, #o_imm nr                ' A2    immediate       ldx #$44
                 nop                                     ' A3
                 nop                                     ' A4
                 nop                                     ' A5
@@ -511,7 +514,7 @@ mapping         nop                                     ' 00
                 nop                                     ' A7
 
                 jmp     #i_tay                          ' A8                    tay
-                jmpret  i_lda, #o_imm nr                ' A9    immediate       lda #$34
+                jmpret  i_lda, #o_imm nr                ' A9    immediate       lda #$44
                 jmp     #i_tax                          ' AA                    tax
                 nop                                     ' AB
                 nop                                     ' AC
@@ -555,7 +558,7 @@ mapping         nop                                     ' 00
                 nop                                     ' CE
                 nop                                     ' CF
 
-                jmpret  i_bne, #o_imm nr                ' D0    relative        bne $1234
+                jmpret  i_bne, #o_imm nr                ' D0    relative        bne $4400
                 nop                                     ' D1
                 nop                                     ' D2
                 nop                                     ' D3
@@ -570,7 +573,7 @@ mapping         nop                                     ' 00
                 nop                                     ' DB
                 nop                                     ' DC
                 nop                                     ' DD
-                jmpret  i_dec, #o_absx nr               ' DE    absolute.x      dec $1234,x
+                jmpret  i_dec, #o_absx nr               ' DE    absolute.x      dec $4400,x
                 nop                                     ' DF
 
                 nop                                     ' E0
@@ -591,7 +594,7 @@ mapping         nop                                     ' 00
                 nop                                     ' EE
                 nop                                     ' EF
 
-                jmpret  i_beq, #o_imm nr                ' F0    relative        beq $1234
+                jmpret  i_beq, #o_imm nr                ' F0    relative        beq $4400
                 nop                                     ' F1
                 nop                                     ' F2
                 nop                                     ' F3
