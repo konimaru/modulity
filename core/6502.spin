@@ -554,11 +554,11 @@ mapping         nop                                     ' 00
                 nop                                     ' 9F
 
                 jmpret  i_ldy, #o_imm nr                ' A0    immediate       ldy #$44
-                nop                                     ' A1
+                jmpret  i_lda, #o_indx nr               ' A1    indirect,x      lda ($44,x)
                 jmpret  i_ldx, #o_imm nr                ' A2    immediate       ldx #$44
                 nop                                     ' A3
                 nop                                     ' A4
-                nop                                     ' A5
+                jmpret  i_lda, #o_zpg nr                ' A5    zeropage        lda $44
                 nop                                     ' A6
                 nop                                     ' A7
 
@@ -567,12 +567,12 @@ mapping         nop                                     ' 00
                 jmp     #i_tax                          ' AA                    tax
                 nop                                     ' AB
                 nop                                     ' AC
-                nop                                     ' AD
+                jmpret  i_lda, #o_abs nr                ' AD    absolute        lda $4400
                 nop                                     ' AE
                 nop                                     ' AF
 
                 jmpret  i_bcs, #o_imm nr                ' B0    relative        bcs $4400
-                nop                                     ' B1
+                jmpret  i_lda, #o_indy nr               ' B1    indirect,y      lda ($44),y
                 nop                                     ' B2
                 nop                                     ' B3
                 jmpret  i_ldy, #o_zpgx nr               ' B4    zeropage,x      ldy $44,x
