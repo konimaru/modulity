@@ -302,10 +302,11 @@ i_slm           rdbyte  tmpc, oadr                      '  +0 = carry clear when
 i_rrm           test    r_st, #F_C wc
 i_srm           rdbyte  tmpc, oadr                      '  +0 = carry clear when used
                 muxc    tmpc, #$100                     '  +8   transfer carry
-                lsr     tmpc, #1 wc,wz                  '  -4   C,Z
-                wrbyte  tmpc, oadr                      '  +0 =
+                lsr     tmpc, #1 wc                     '  -4   C
+                wrbyte  tmpc, oadr wz                   '  +0 = Z
                 muxc    r_st, #F_C                      '       capture bit 0
-                jmp     #f_upda                         '       N
+                test    tmpc, #$80 wc                   '       N
+                jmp     #f_upd{ate}
 
 
 i_bmi           test    r_st, #F_N wc
