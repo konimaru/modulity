@@ -230,12 +230,13 @@ i_txs           andn    r_sp, #$FF                      ' no flag update        
                 or      r_sp, r_xi
                 jmp     #rd_n{ext}
 
+i_inc           test    $, #1 wc                        ' set carry
 i_dec           rdbyte  tmpc, oadr
-                sub     tmpc, #1
+                sumnc   tmpc, #1                        ' dec(clear)/inc(set)
                 test    tmpc, #$80 wc
                 wrbyte  tmpc, oadr wz
                 jmp     #f_upd{ate}
-                
+
 
 i_bmi           test    r_st, #F_N wc
         if_nc   jmp     #rd_n{ext}
@@ -555,7 +556,7 @@ mapping         nop                                     ' 00
                 nop                                     ' CB
                 nop                                     ' CC
                 nop                                     ' CD
-                jmpret  i_dec, #o_abs nr                ' CE    absolute        dec $4400
+                jmpret  i_dec, #o_abs wc,nr             ' CE    absolute        dec $4400 (carry clear)
                 nop                                     ' CF
 
                 jmpret  i_bne, #o_imm nr                ' D0    relative        bne $4400
@@ -573,7 +574,7 @@ mapping         nop                                     ' 00
                 nop                                     ' DB
                 nop                                     ' DC
                 nop                                     ' DD
-                jmpret  i_dec, #o_absx nr               ' DE    absolute.x      dec $4400,x
+                jmpret  i_dec, #o_absx wc,nr            ' DE    absolute.x      dec $4400,x (carry clear)
                 nop                                     ' DF
 
                 nop                                     ' E0
@@ -591,7 +592,7 @@ mapping         nop                                     ' 00
                 nop                                     ' EB
                 nop                                     ' EC
                 nop                                     ' ED
-                nop                                     ' EE
+                jmpret  i_inc, #o_abs nr                ' EE    absolute        inc $4400
                 nop                                     ' EF
 
                 jmpret  i_beq, #o_imm nr                ' F0    relative        beq $4400
@@ -609,7 +610,7 @@ mapping         nop                                     ' 00
                 nop                                     ' FB
                 nop                                     ' FC
                 nop                                     ' FD
-                nop                                     ' FE
+                jmpret  i_inc, #o_absx nr               ' FE    absolute,x      inc $4400,x
                 nop                                     ' FF
 
 DAT
