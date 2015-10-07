@@ -555,7 +555,7 @@ mapping         nop                                     ' 00
                 nop                                     ' CB
                 nop                                     ' CC
                 nop                                     ' CD
-                nop                                     ' CE
+                jmpret  i_dec, #o_abs nr                ' CE    absolute        dec $4400
                 nop                                     ' CF
 
                 jmpret  i_bne, #o_imm nr                ' D0    relative        bne $4400
