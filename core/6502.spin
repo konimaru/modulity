@@ -306,6 +306,14 @@ i_bcc           test    r_st, #F_C wc
         if_nc   jmp     #f_rel{ative}
                 jmp     #rd_n{ext}
 
+i_bvs           test    r_st, #F_V wc
+        if_c    jmp     #f_rel{ative}
+                jmp     #rd_n{ext}
+
+i_bvc           test    r_st, #F_V wc
+        if_nc   jmp     #f_rel{ative}
+                jmp     #rd_n{ext}
+
 
 push            wrbyte  tmps, r_sp                      ' byte[sp--] := tmps
                 sub     r_sp, #1
@@ -392,7 +400,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 0F
 
                 jmpret  i_bpl, #o_imm nr                ' 10    relative        bpl $4400
-                nop                                     ' 11
+                jmpret  i_ora, #o_indy nr               ' 11    indirect,y      ora ($44),y
                 nop                                     ' 12
                 nop                                     ' 13
                 nop                                     ' 14
@@ -410,7 +418,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 1F
 
                 jmpret  i_jsr, #o_abs nr                ' 20    absolute        jsr $4400
-                nop                                     ' 21
+                jmpret  i_and, #o_indx nr               ' 21    indirect,x      and ($44,x)
                 nop                                     ' 22
                 nop                                     ' 23
                 nop                                     ' 24
@@ -428,7 +436,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 2F
 
                 jmpret  i_bmi, #o_imm nr                ' 30    relative        bmi $4400
-                nop                                     ' 31
+                jmpret  i_and, #o_indy nr               ' 31    indirect,y      and ($44),y
                 nop                                     ' 32
                 nop                                     ' 33
                 nop                                     ' 34
@@ -446,7 +454,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 3F
 
                 nop                                     ' 40
-                nop                                     ' 41
+                jmpret  i_eor, #o_indx nr               ' 41    indirect,x      eor ($44,x)
                 nop                                     ' 42
                 nop                                     ' 43
                 nop                                     ' 44
@@ -463,8 +471,8 @@ mapping         nop                                     ' 00
                 nop                                     ' 4E
                 nop                                     ' 4F
 
-                nop                                     ' 50
-                nop                                     ' 51
+                jmpret  i_bvc, #o_imm nr                ' 50    relative        bvc $4400
+                jmprer  i_eor, #o_indy nr               ' 51    indirect,y      eor ($44),y
                 nop                                     ' 52
                 nop                                     ' 53
                 nop                                     ' 54
@@ -499,7 +507,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 6E
                 nop                                     ' 6F
 
-                nop                                     ' 70
+                jmpret  i_bvs, #o_imm nr                ' 70    relative        bvs $4400
                 nop                                     ' 71
                 nop                                     ' 72
                 nop                                     ' 73
@@ -518,12 +526,12 @@ mapping         nop                                     ' 00
                 nop                                     ' 7F
 
                 nop                                     ' 80
-                nop                                     ' 81
+                jmpret  i_sta, #o_indx nr               ' 81    indirect,x      sta ($44,x)
                 nop                                     ' 82
                 nop                                     ' 83
-                nop                                     ' 84
+                jmpret  i_sty, #o_zpg nr                ' 84    zeropage        sty $44
                 jmpret  i_sta, #o_zpg nr                ' 85    zeropage        sta $44
-                nop                                     ' 86
+                jmpret  i_stx, #o_zpg nr                ' 86    zeropage        stx $44
                 nop                                     ' 87
 
                 jmpret  exec, #i_diy wc,nr              ' 88                    dey (carry clear)
@@ -536,7 +544,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 8F
 
                 jmpret  i_bcc, #o_imm nr                ' 90    relative        bcc $4400
-                nop                                     ' 91
+                jmpret  i_sta, #o_indy nr               ' 91    indirect,y      sta ($44),y
                 nop                                     ' 92
                 nop                                     ' 93
                 jmpret  i_sty, #o_zpgx nr               ' 94    zeropage,x      sty $44,x
@@ -545,7 +553,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 97
 
                 jmp     #i_tya                          ' 98                    tya
-                nop                                     ' 99
+                jmpret  i_sta, #o_absy nr               ' 99    absolute,y      sta $4400,y
                 jmp     #i_txs                          ' 9A                    txs
                 nop                                     ' 9B
                 nop                                     ' 9C
@@ -557,18 +565,18 @@ mapping         nop                                     ' 00
                 jmpret  i_lda, #o_indx nr               ' A1    indirect,x      lda ($44,x)
                 jmpret  i_ldx, #o_imm nr                ' A2    immediate       ldx #$44
                 nop                                     ' A3
-                nop                                     ' A4
+                jmpret  i_ldy, #o_zpg nr                ' A4    zeropage        ldy $44
                 jmpret  i_lda, #o_zpg nr                ' A5    zeropage        lda $44
-                nop                                     ' A6
+                jmpret  i_ldx, #o_zpg nr                ' A6    zeropage        ldx $44
                 nop                                     ' A7
 
                 jmp     #i_tay                          ' A8                    tay
                 jmpret  i_lda, #o_imm nr                ' A9    immediate       lda #$44
                 jmp     #i_tax                          ' AA                    tax
                 nop                                     ' AB
-                nop                                     ' AC
+                jmpret  i_ldy, #o_abs nr                ' AC    absolute        ldy $4400
                 jmpret  i_lda, #o_abs nr                ' AD    absolute        lda $4400
-                nop                                     ' AE
+                jmpret  i_ldx, #o_abs nr                ' AE    absolute        ldx $4400
                 nop                                     ' AF
 
                 jmpret  i_bcs, #o_imm nr                ' B0    relative        bcs $4400
@@ -586,7 +594,7 @@ mapping         nop                                     ' 00
                 nop                                     ' BB
                 jmpret  i_ldy, #o_absx nr               ' BC    absolute,x      ldy $4400,x
                 jmpret  i_lda, #o_absx nr               ' BD    absolute,x      lda $4400,x
-                nop                                     ' BE
+                jmpret  i_ldx, #o_absy nr               ' BE    absolute,y      ldx $4400,y
                 nop                                     ' BF
 
                 nop                                     ' C0
@@ -595,7 +603,7 @@ mapping         nop                                     ' 00
                 nop                                     ' C3
                 nop                                     ' C4
                 nop                                     ' C5
-                nop                                     ' C6
+                jmpret  i_dec, #o_zpg nr                ' C6    zeropage        dec $44
                 nop                                     ' C7
 
                 jmpret  zero, #i_diy wc,nr              ' C8                    iny (carry set)
@@ -631,7 +639,7 @@ mapping         nop                                     ' 00
                 nop                                     ' E3
                 nop                                     ' E4
                 nop                                     ' E5
-                nop                                     ' E6
+                jmpret  i_inc, #o_zpg nr                ' E6    zeropage        inc $44
                 nop                                     ' E7
 
                 jmpret  zero, #i_dix wc,nr              ' E8                    inx (carry set)
