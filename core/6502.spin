@@ -150,9 +150,6 @@ o_zpg           rdbyte  oadr, addr
                 add     addr, #1
                 jmp     #link                           ' process insn
 
-' If/when we run out of code space we could safe 3 longs below at
-' the cost of 4 and 8 cycles for o_zpgx and o_zpgy respectively.
-
 o_zpgx          rdbyte  oadr, addr
                 add     oadr, r_xi
                 and     oadr, #$FF
