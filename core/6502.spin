@@ -278,7 +278,7 @@ i_dec           rdbyte  tmpc, oadr
                 jmp     #f_upd{ate}
 
 i_rla           test    r_st, #F_C wc
-i_sla           rcl     r_ac, #1
+i_sla           rcl     r_ac, #1                        '       carry clear when used
                 test    r_ac, #$100 wc                  '       C
                 muxc    r_st, #F_C                      '       capture bit 7
                 and     r_ac, #$FF wz                   '       Z
@@ -289,7 +289,7 @@ i_sra           lsr     r_ac, #1 wc,wz                  '       C,Z
                 jmpret  $, #f_upd{ate} wc,nr            '       N
 
 i_rlm           test    r_st, #F_C wc
-i_slm           rdbyte  tmpc, oadr                      '  +0 =
+i_slm           rdbyte  tmpc, oadr                      '  +0 = carry clear when used
                 rcl     tmpc, #1                        '  +8
                 test    tmpc, #$100 wc                  '  -4   C
                 wrbyte  tmpc, oadr wz                   '  +0 = Z
