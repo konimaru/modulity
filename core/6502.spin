@@ -162,6 +162,18 @@ o_zpgy          rdbyte  oadr, addr
                 add     addr, #1
                 jmp     #link                           ' process insn
 
+o_indx          rdbyte  oadr, addr                      '  +0 = (zp,x)
+                add     oadr, r_xi                      '  +8
+                and     oadr, #$FF                      '  -4
+                rdbyte  tmpc, oadr                      '  +0 = LSB
+                add     oadr, #1                        '  +8
+                and     oadr, #$FF                      '  -4
+                rdbyte  oadr, oadr                      '  +0 = MSB
+                shl     oadr, #8
+                or      oadr, tmpc
+                add     addr, #1
+                jmp     #link                           ' process insn
+                
 
 i_rts           call    #pull
                 mov     addr, tmps                      ' LSB
