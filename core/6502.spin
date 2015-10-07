@@ -149,7 +149,22 @@ o_imm           mov     oadr, addr
 o_zpg           rdbyte  oadr, addr
                 add     addr, #1
                 jmp     #link                           ' process insn
-                
+
+' If/when we run out of code space we could safe 3 longs below at
+' the cost of 4 and 8 cycles for o_zpgx and o_zpgy respectively.
+
+o_zpgx          rdbyte  oadr, addr
+                add     oadr, r_xi
+                and     oadr, #$FF
+                add     addr, #1
+                jmp     #link                           ' process insn
+
+o_zpgy          rdbyte  oadr, addr
+                add     oadr, r_yi
+                and     oadr, #$FF
+                add     addr, #1
+                jmp     #link                           ' process insn
+
 
 i_rts           call    #pull
                 mov     addr, tmps                      ' LSB
@@ -360,7 +375,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 12
                 nop                                     ' 13
                 nop                                     ' 14
-                nop                                     ' 15
+                jmpret  i_ora, #o_zpgx nr               ' 15    zeropage,x      ora $44,x
                 nop                                     ' 16
                 nop                                     ' 17
 
@@ -396,7 +411,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 32
                 nop                                     ' 33
                 nop                                     ' 34
-                nop                                     ' 35
+                jmpret  i_and, #o_zpgx nr               ' 35    zeropage,x      and $44,x
                 nop                                     ' 36
                 nop                                     ' 37
 
@@ -432,7 +447,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 52
                 nop                                     ' 53
                 nop                                     ' 54
-                nop                                     ' 55
+                jmpret  i_eor, #o_zpgx nr               ' 55    zeropage,x      eor $44,x
                 nop                                     ' 56
                 nop                                     ' 57
 
@@ -503,9 +518,9 @@ mapping         nop                                     ' 00
                 nop                                     ' 91
                 nop                                     ' 92
                 nop                                     ' 93
-                nop                                     ' 94
-                nop                                     ' 95
-                nop                                     ' 96
+                jmpret  i_sty, #o_zpgx nr               ' 94    zeropage,x      sty $44,x
+                jmpret  i_sta, #o_zpgx nr               ' 95    zeropage,x      sta $44,x
+                jmpret  i_stx, #o_zpgy nr               ' 96    zeropage,y      stx $44,y
                 nop                                     ' 97
 
                 jmp     #i_tya                          ' 98                    tya
@@ -539,9 +554,9 @@ mapping         nop                                     ' 00
                 nop                                     ' B1
                 nop                                     ' B2
                 nop                                     ' B3
-                nop                                     ' B4
-                nop                                     ' B5
-                nop                                     ' B6
+                jmpret  i_ldy, #o_zpgx nr               ' B4    zeropage,x      ldy $44,x
+                jmpret  i_lda, #o_zpgx nr               ' B5    zeropage,x      lda $44,x
+                jmpret  i_ldx, #o_zpgy nr               ' B6    zeropage,y      ldx $44,y
                 nop                                     ' B7
 
                 nop                                     ' B8
@@ -577,7 +592,7 @@ mapping         nop                                     ' 00
                 nop                                     ' D3
                 nop                                     ' D4
                 nop                                     ' D5
-                nop                                     ' D6
+                jmpret  i_dec, #o_zpgx nr               ' D6    zeropage,x      dec $44,x
                 nop                                     ' D7
 
                 nop                                     ' D8
@@ -613,7 +628,7 @@ mapping         nop                                     ' 00
                 nop                                     ' F3
                 nop                                     ' F4
                 nop                                     ' F5
-                nop                                     ' F6
+                jmpret  i_inc, #o_zpgx nr               ' F6    zeropage,x      inc $44,x
                 nop                                     ' F7
 
                 nop                                     ' F8
