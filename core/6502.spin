@@ -258,6 +258,14 @@ i_bne           test    r_st, #F_Z wc
         if_nc   jmp     #f_rel{ative}
                 jmp     #rd_n{ext}
 
+i_bcs           test    r_st, #F_C wc
+        if_c    jmp     #f_rel{ative}
+                jmp     #rd_n{ext}
+
+i_bcc           test    r_st, #F_C wc
+        if_nc   jmp     #f_rel{ative}
+                jmp     #rd_n{ext}
+
 
 push            wrbyte  tmps, r_sp                      ' byte[sp--] := tmps
                 sub     r_sp, #1
@@ -487,7 +495,7 @@ mapping         nop                                     ' 00
                 jmpret  i_stx, #o_abs nr                ' 8E    absolute        stx $4400
                 nop                                     ' 8F
 
-                nop                                     ' 90
+                jmpret  i_bcc, #o_imm nr                ' 90    relative        bcc $4400
                 nop                                     ' 91
                 nop                                     ' 92
                 nop                                     ' 93
@@ -523,7 +531,7 @@ mapping         nop                                     ' 00
                 nop                                     ' AE
                 nop                                     ' AF
 
-                nop                                     ' B0
+                jmpret  i_bcs, #o_imm nr                ' B0    relative        bcs $4400
                 nop                                     ' B1
                 nop                                     ' B2
                 nop                                     ' B3
