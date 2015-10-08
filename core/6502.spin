@@ -253,6 +253,11 @@ i_eor           rdbyte  tmpc, oadr                      ' fetch mask
                 xor     r_ac, tmpc wz
                 jmp     #f_upda
 
+i_cmp           rdbyte  tmpc, oadr                      ' comparison value
+                cmpsub  r_ac, tmpc wc,wz,nr             ' C,Z
+                muxc    r_st, #F_C
+                jmp     #f_upda
+
 i_dix           sumnc   r_xi, #1                        ' dex(clear)/inx(set)
                 and     r_xi, #$FF wz
                 jmp     #f_updx
@@ -629,38 +634,38 @@ mapping         nop                                     ' 00
                 nop                                     ' BF
 
                 nop                                     ' C0
-                nop                                     ' C1
+                jmpret  i_cmp, #o_indx nr               ' C1    indirect,x      cmp ($44,x)
                 nop                                     ' C2
                 nop                                     ' C3
                 nop                                     ' C4
-                nop                                     ' C5
+                jmpret  i_cmp, #o_zpg nr                ' C5    zeropage        cmp $44
                 jmpret  i_dec, #o_zpg wc,nr             ' C6    zeropage        dec $44         (carry clear)
                 nop                                     ' C7
 
                 jmpret  zero, #i_diy wc,nr              ' C8                    iny             (carry set)
-                nop                                     ' C9
+                jmpret  i_cmp, #o_imm nr                ' C9    immediate       cmp #$44
                 jmpret  exec, #i_dix wc,nr              ' CA                    dex             (carry clear)
                 nop                                     ' CB
                 nop                                     ' CC
-                nop                                     ' CD
+                jmpret  i_cmp, #o_abs nr                ' CD    absolute        cmp $4400
                 jmpret  i_dec, #o_abs wc,nr             ' CE    absolute        dec $4400       (carry clear)
                 nop                                     ' CF
 
                 jmpret  i_bne, #o_imm nr                ' D0    relative        bne $4400
-                nop                                     ' D1
+                jmpret  i_cmp, #o_indy nr               ' D1    indirect,y      cmp ($44),y
                 nop                                     ' D2
                 nop                                     ' D3
                 nop                                     ' D4
-                nop                                     ' D5
+                jmpret  i_cmp, #o_zpgx nr               ' D5    zeropage,x      cmp $44,x
                 jmpret  i_dec, #o_zpgx wc,nr            ' D6    zeropage,x      dec $44,x       (carry clear)
                 nop                                     ' D7
 
                 nop                                     ' D8
-                nop                                     ' D9
+                jmpret  i_cmp, #o_absy nr               ' D9    absolute,y      cmp $4400,y
                 nop                                     ' DA
                 nop                                     ' DB
                 nop                                     ' DC
-                nop                                     ' DD
+                jmpret  i_cmp, #o_absx nr               ' DD    absolute,x      cmp $4400,x
                 jmpret  i_dec, #o_absx wc,nr            ' DE    absolute.x      dec $4400,x     (carry clear)
                 nop                                     ' DF
 
