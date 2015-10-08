@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/06
-''       Version: 0.8
+'' Last modified: 2015/10/08
+''       Version: 0.9
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
@@ -17,37 +17,37 @@ CON
   
 OBJ
   serial: "FullDuplexSerial"
-  
-PUB main : n| mbox[res_m]
 
+PUB main : n | mbox[res_m]
+
+  bytemove(TARGET-16, @wrapper, @after-@wrapper)
   init(-1, @mbox{0})
+
   serial.start(31, 30, %0000, 115200)
-  bytemove(TARGET, @sid, @sidend-@sid)
   longfill($7F00, -1, 64)
   waitcnt(clkfreq*3 + cnt)
   serial.tx(0)
   waitcnt(clkfreq*1 + cnt)
-  
+
   repeat
   while mbox{0} < 0                                     ' startup complete
 
   repeat
-    mbox{0} := NEGX|@wrapper
+    mbox{0} := NEGX|(TARGET-16)
     repeat
     while mbox{0} < 0
     n++
-  until mbox.word{0} <> @w_end
-
-  dira[16..23]~~
-  outa[16..23] := mbox.byte[2]
+  until mbox.word{0} <> $6FF8
 
   println(mbox{0})
   println(n)
+  println(cnt)
+  println(long[$5000])
   dump(mbox{0}-32)
   serial.tx(13)
   dump($0000)
   serial.tx(13)
-  dump($7F00)
+  dump($7280)
   
   waitpne(0, 0, 0)
 
@@ -68,13 +68,18 @@ PRI dump(address) | x, y
     
 DAT     byte    $FF[256]
 
-wrapper byte    $6C, $33, $01, $35, $01
-        byte    $20, word ENTRY
-w_end   byte    $00
         
-DAT     long    'newtest2-7000.bin'
+DAT
+before  long    -1[256]
+DAT
+wrapper byte    $6C, $F3, $6F, $F5, $6F
+        byte    $20, word ENTRY
+w_end   byte    $00[8]
+DAT
+        long
 sid     file    "newtest2-7000.bin"
-sidend
+DAT
+after   long    -1[256]
         
 OBJ
   system: "core.con.system"
@@ -274,7 +279,7 @@ i_inc           test    $, #1 wc                        ' set carry
 i_dec           rdbyte  tmpc, oadr
                 sumnc   tmpc, #1                        ' dec(clear)/inc(set)
                 test    tmpc, #$80 wc
-                wrbyte  tmpc, oadr wz
+{NG}            wrbyte  tmpc, oadr wz
                 jmp     #f_upd{ate}
 
 i_rla           test    r_st, #F_C wc
@@ -286,7 +291,7 @@ i_sla           rcl     r_ac, #1                        '       carry clear when
 
 i_rra           test    r_st, #F_C wc                   '       |
                 muxc    r_ac, #$100                     '       transfer carry
-i_sra           lsr     r_ac, #1 wc,wz                  '       C,Z
+i_sra           shr     r_ac, #1 wc,wz                  '       C,Z
                 muxc    r_st, #F_C                      '       capture bit 0
                 jmp     #f_upda                         '       N
 
@@ -294,7 +299,7 @@ i_rlm           test    r_st, #F_C wc
 i_slm           rdbyte  tmpc, oadr                      '  +0 = carry clear when used
                 rcl     tmpc, #1                        '  +8   transfer carry
                 test    tmpc, #$100 wc                  '  -4   C
-                wrbyte  tmpc, oadr wz                   '  +0 = Z
+{NG}            wrbyte  tmpc, oadr wz                   '  +0 = Z
                 muxc    r_st, #F_C                      '       capture bit 7
                 test    tmpc, #$80 wc                   '       N
                 jmp     #f_upd{ate}
@@ -302,8 +307,8 @@ i_slm           rdbyte  tmpc, oadr                      '  +0 = carry clear when
 i_rrm           test    r_st, #F_C wc
 i_srm           rdbyte  tmpc, oadr                      '  +0 = carry clear when used
                 muxc    tmpc, #$100                     '  +8   transfer carry
-                lsr     tmpc, #1 wc                     '  -4   C
-                wrbyte  tmpc, oadr wz                   '  +0 = Z
+                shr     tmpc, #1 wc,wz                  '  -4   C,Z
+                wrbyte  tmpc, oadr                      '  +0 =
                 muxc    r_st, #F_C                      '       capture bit 0
                 test    tmpc, #$80 wc                   '       N
                 jmp     #f_upd{ate}
@@ -391,7 +396,7 @@ tmps            res     1                               ' stack operand
 tmpc            res     1
 
 tail            fit
-               
+
 CON
   F_N = %10000000
   F_V = %01000000
@@ -463,7 +468,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 2B
                 nop                                     ' 2C
                 jmpret  i_and, #o_abs nr                ' 2D    absolute        and $4400
-                jmpret  i_rlm, #i_abs nr                ' 2E    absolute        rol $4400
+                jmpret  i_rlm, #o_abs nr                ' 2E    absolute        rol $4400
                 nop                                     ' 2F
 
                 jmpret  i_bmi, #o_imm nr                ' 30    relative        bmi $4400
@@ -503,7 +508,7 @@ mapping         nop                                     ' 00
                 nop                                     ' 4F
 
                 jmpret  i_bvc, #o_imm nr                ' 50    relative        bvc $4400
-                jmprer  i_eor, #o_indy nr               ' 51    indirect,y      eor ($44),y
+                jmpret  i_eor, #o_indy nr               ' 51    indirect,y      eor ($44),y
                 nop                                     ' 52
                 nop                                     ' 53
                 nop                                     ' 54
