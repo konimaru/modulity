@@ -20,11 +20,11 @@ OBJ
 
 PUB main : n | mbox[res_m]
 
-  bytemove(TARGET-16, @wrapper, @after-@wrapper)
   init(-1, @mbox{0})
+  bytemove(TARGET-16, @wrapper, @after-@wrapper)
+  longfill($7F00, -1, 64)
 
   serial.start(31, 30, %0000, 115200)
-  longfill($7F00, -1, 64)
   waitcnt(clkfreq*3 + cnt)
   serial.tx(0)
   waitcnt(clkfreq*1 + cnt)
@@ -42,12 +42,11 @@ PUB main : n | mbox[res_m]
   println(mbox{0})
   println(n)
   println(cnt)
-  println(long[$5000])
   dump(mbox{0}-32)
   serial.tx(13)
   dump($0000)
   serial.tx(13)
-  dump($7280)
+  dump($7F00)
   
   waitpne(0, 0, 0)
 
@@ -67,10 +66,6 @@ PRI dump(address) | x, y
     serial.tx(13)
     
 DAT     byte    $FF[256]
-
-        
-DAT
-before  long    -1[256]
 DAT
 wrapper byte    $6C, $F3, $6F, $F5, $6F
         byte    $20, word ENTRY
@@ -78,8 +73,7 @@ w_end   byte    $00[8]
 DAT
         long
 sid     file    "newtest2-7000.bin"
-DAT
-after   long    -1[256]
+after   long    0
         
 OBJ
   system: "core.con.system"
@@ -279,7 +273,8 @@ i_inc           test    $, #1 wc                        ' set carry
 i_dec           rdbyte  tmpc, oadr
                 sumnc   tmpc, #1                        ' dec(clear)/inc(set)
                 test    tmpc, #$80 wc
-{NG}            wrbyte  tmpc, oadr wz
+{NG}            wrbyte  tmpc, oadr{wz}
+                test    tmpc, #$FF wz
                 jmp     #f_upd{ate}
 
 i_rla           test    r_st, #F_C wc
@@ -297,9 +292,9 @@ i_sra           shr     r_ac, #1 wc,wz                  '       C,Z
 
 i_rlm           test    r_st, #F_C wc
 i_slm           rdbyte  tmpc, oadr                      '  +0 = carry clear when used
-                rcl     tmpc, #1                        '  +8   transfer carry
-                test    tmpc, #$100 wc                  '  -4   C
-{NG}            wrbyte  tmpc, oadr wz                   '  +0 = Z
+                rcl     tmpc, #1 wc,wz                  '  +8   transfer carry, post clear
+        if_nz   cmpsub  tmpc, #$100 wc,wz               '  -4   C,Z
+{NG}            wrbyte  tmpc, oadr{wz}                  '  +0 =
                 muxc    r_st, #F_C                      '       capture bit 7
                 test    tmpc, #$80 wc                   '       N
                 jmp     #f_upd{ate}
