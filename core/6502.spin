@@ -1,11 +1,13 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/08
-''       Version: 0.9
+'' Last modified: 2015/10/10
+''       Version: 0.10
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
 '' - 6502 Emulator Copyright (C) Eric Ball and Darryl Biggar
+''
+'' ToDo: ADC/SBC, BRK, RTI, PHA, PLA, PHP, PLP, ADC/SBC decimal mode
 ''
 CON
   _clkmode = XTAL1|PLL16X
@@ -252,20 +254,29 @@ i_eor           rdbyte  tmpc, oadr                      ' fetch mask
                 xor     r_ac, tmpc wz
                 jmp     #f_upda
 
+i_bit           rdbyte  tmpc, oadr                      ' fetch mask
+                test    tmpc, #F_V wc                   ' V (copy)
+                muxc    r_st, #F_V
+                test    r_ac, tmpc wz                   ' Z
+                test    tmpc, #F_N wc                   ' N (copy)
+                jmp     #f_upd{ate}
+
+                
 i_cmp           rdbyte  tmpc, oadr                      ' comparison value
-                cmpsub  r_ac, tmpc wc,wz,nr             ' C,Z
-                muxc    r_st, #F_C
-                jmp     #f_upda
+                mov     tmps, r_ac
+f_compare       sub     tmps, tmpc wc,wz                ' C,Z
+                muxnc   r_st, #F_C
+                test    tmps, #$80 wc                   ' N
+                jmp     #f_upd{ate}
 
 i_cpx           rdbyte  tmpc, oadr                      ' comparison value
-                cmpsub  r_xi, tmpc wc,wz,nr             ' C,Z
-                muxc    r_st, #F_C
-                jmp     #f_updx
+                mov     tmps, r_xi
+                jmp     #f_compare
                 
 i_cpy           rdbyte  tmpc, oadr                      ' comparison value
-                cmpsub  r_yi, tmpc wc,wz,nr             ' C,Z
-                muxc    r_st, #F_C
-                jmp     #f_updy
+                mov     tmps, r_yi
+                jmp     #f_compare
+
 
 i_dix           sumnc   r_xi, #1                        ' dex(clear)/inx(set)
                 and     r_xi, #$FF wz
@@ -323,7 +334,15 @@ i_srm           rdbyte  tmpc, oadr                      '  +0 = carry clear when
                 jmp     #f_upd{ate}
 
 
-i_adc
+i_adc   {       rdbyte  tmpc, oadr                      ' fetch operand
+                test    r_st, #F_C                      ' fetch carry
+                addx    r_ac, tmpc
+
+                test    r_ac, #$100 wc                  ' C
+                muxc    r_st, #F_C
+                and     r_ac, #$FF wz                   ' Z
+                jmp     #f_upda                         ' N
+}               
 i_sbc           jmp     #stop
 
 
@@ -427,7 +446,7 @@ insn            res     1
 
 oadr            res     1                               ' operand address
 
-tmps            res     1                               ' stack operand
+tmps            res     1                               ' primarily stack operand
 tmpc            res     1
 
 tail            fit
@@ -492,7 +511,7 @@ mapping         nop                                     ' 00
                 jmpret  i_and, #o_indx nr               ' 21    indirect,x      and ($44,x)
                 nop                                     ' 22
                 nop                                     ' 23
-                nop                                     ' 24
+                jmpret  i_bit, #o_zpg nr                ' 24    zeropage        bit $44
                 jmpret  i_and, #o_zpg nr                ' 25    zeropage        and $44
                 jmpret  i_rlm, #o_zpg nr                ' 26    zeropage        rol $44
                 nop                                     ' 27
@@ -501,7 +520,7 @@ mapping         nop                                     ' 00
                 jmpret  i_and, #o_imm nr                ' 29    immediate       and #$44
                 jmp     #i_rla                          ' 2A                    rol a
                 nop                                     ' 2B
-                nop                                     ' 2C
+                jmpret  i_bit, #o_abs nr                ' 2C    absolute        bit $4400
                 jmpret  i_and, #o_abs nr                ' 2D    absolute        and $4400
                 jmpret  i_rlm, #o_abs nr                ' 2E    absolute        rol $4400
                 nop                                     ' 2F
