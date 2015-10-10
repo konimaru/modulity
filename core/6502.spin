@@ -323,6 +323,7 @@ i_srm           rdbyte  tmpc, oadr                      '  +0 = carry clear when
                 jmp     #f_upd{ate}
 
 
+i_adc
 i_sbc           jmp     #stop
 
 
@@ -452,7 +453,7 @@ CON
 DAT
 
 mapping         nop                                     ' 00
-                nop                                     ' 01
+                jmpret  i_ora, #o_indx nr               ' 01    indirect,x      ora ($44,x)
                 nop                                     ' 02
                 nop                                     ' 03
                 nop                                     ' 04
@@ -560,38 +561,38 @@ mapping         nop                                     ' 00
                 nop                                     ' 5F
 
                 jmp     #i_rts                          ' 60                    rts
-                nop                                     ' 61
+                jmpret  i_adc, #o_indx nr               ' 61    indirect,x      adc ($44,x)
                 nop                                     ' 62
                 nop                                     ' 63
                 nop                                     ' 64
-                nop                                     ' 65
+                jmpret  i_adc, #o_zpg nr                ' 65    zeropage        adc $44
                 jmpret  i_rrm, #o_zpg nr                ' 66    zeropage        ror $44
                 nop                                     ' 67
 
                 nop                                     ' 68
-                nop                                     ' 69
+                jmpret  i_adc, #o_imm nr                ' 69    immediate       adc #$44
                 jmp     #i_rra                          ' 6A                    ror a
                 nop                                     ' 6B
                 jmpret  i_jmp, #o_ind nr                ' 6C    indirect        jmp ($4400)
-                nop                                     ' 6D
+                jmpret  i_adc, #o_abs nr                ' 6D    absolute        adc $4400
                 jmpret  i_rrm, #o_abs nr                ' 6E    absolute        ror $4400
                 nop                                     ' 6F
 
                 jmpret  i_bvs, #o_imm nr                ' 70    relative        bvs $4400
-                nop                                     ' 71
+                jmpret  i_adc, #o_indy nr               ' 71    indirect,y      adc ($44),y
                 nop                                     ' 72
                 nop                                     ' 73
                 nop                                     ' 74
-                nop                                     ' 75
+                jmpret  i_adc, #o_zpgx nr               ' 75    zeropage,x      adc $44,x
                 jmpret  i_rrm, #o_zpgx nr               ' 76    zeropage,x      ror $44,x
                 nop                                     ' 77
 
                 jmp     #i_sei                          ' 78                    sei
-                nop                                     ' 79
+                jmpret  i_adc, #o_absy nr               ' 79    absolute,y      adc $4400,y
                 nop                                     ' 7A
                 nop                                     ' 7B
                 nop                                     ' 7C
-                nop                                     ' 7D
+                jmpret  i_adc, #o_absx nr               ' 7D    absolute,x      adc $4400,x
                 jmpret  i_rrm, #o_absx nr               ' 7E    absolute,x      ror $4400,x
                 nop                                     ' 7F
 
