@@ -21,7 +21,7 @@ OBJ
 PUB main : n | mbox[res_m]
 
   init(-1, @mbox{0})
-  bytemove(TARGET-16, @wrapper, @after-@wrapper)
+  bytemove(TARGET, @sid, @sid_end-@sid)
   longfill($7F00, -1, 64)
 
   serial.start(31, 30, %0000, 115200)
@@ -33,11 +33,11 @@ PUB main : n | mbox[res_m]
   while mbox{0} < 0                                     ' startup complete
 
   repeat
-    mbox{0} := NEGX|(TARGET-16)
+    mbox{0} := NEGX|@wrapper
     repeat
     while mbox{0} < 0
     n++
-  until mbox.word{0} <> $6FF8
+  until mbox.word{0} <> @w_end
 
   println(mbox{0})
   println(n)
@@ -67,13 +67,12 @@ PRI dump(address) | x, y
     
 DAT     byte    $FF[256]
 DAT
-wrapper byte    $6C, $F3, $6F, $F5, $6F
-        byte    $20, word ENTRY
-w_end   byte    $00[8]
-DAT
-        long
+wrapper byte    $20, word ENTRY
+w_end   byte    $00
+
+DAT     long    'newtest2-7000.bin'
 sid     file    "newtest2-7000.bin"
-after   long    0
+sid_end
         
 OBJ
   system: "core.con.system"
@@ -87,7 +86,7 @@ PUB init(ID, mailbox)
   
   return system.launch(ID, @core, mailbox)
   
-DAT             org     0
+DAT             org     0                               ' 6502 core
 
 core            jmpret  $, #setup                       '  -4
 
@@ -314,6 +313,28 @@ i_srm           rdbyte  tmpc, oadr                      '  +0 = carry clear when
                 jmp     #f_upd{ate}
 
 
+i_clc           andn    r_st, #F_C
+                jmp     #rd_n{ext}
+
+i_sec           or      r_st, #F_C
+                jmp     #rd_n{ext}
+
+i_cli           andn    r_st, #F_I
+                jmp     #rd_n{ext}
+
+i_sei           or      r_st, #F_I
+                jmp     #rd_n{ext}
+
+i_clv           andn    r_st, #F_V
+                jmp     #rd_n{ext}
+
+i_cld           andn    r_st, #F_D
+                jmp     #rd_n{ext}
+
+i_sed           or      r_st, #F_D
+                jmp     #rd_n{ext}
+
+
 i_bmi           test    r_st, #F_N wc
         if_nc   jmp     #rd_n{ext}
 f_rel{ative}    rdbyte  tmpc, oadr
@@ -444,7 +465,7 @@ mapping         nop                                     ' 00
                 jmpret  i_slm, #o_zpgx wc,nr            ' 16    zeropage,x      asl $44,x       (carry clear)
                 nop                                     ' 17
 
-                nop                                     ' 18
+                jmp     #i_clc                          ' 18                    clc
                 jmpret  i_ora, #o_absy nr               ' 19    absolute,y      ora $4400,y
                 nop                                     ' 1A
                 nop                                     ' 1B
@@ -480,7 +501,7 @@ mapping         nop                                     ' 00
                 jmpret  i_rlm, #o_zpgx nr               ' 36    zeropage,x      rol $44,x
                 nop                                     ' 37
 
-                nop                                     ' 38
+                jmp     #i_sec                          ' 38                    sec
                 jmpret  i_and, #o_absy nr               ' 39    absolute,y      and $4400,y
                 nop                                     ' 3A
                 nop                                     ' 3B
@@ -516,7 +537,7 @@ mapping         nop                                     ' 00
                 jmpret  i_srm, #o_zpgx wc,nr            ' 56    zeropage,x      lsr $44,x       (carry clear)
                 nop                                     ' 57
 
-                nop                                     ' 58
+                jmp     #i_cli                          ' 58                    cli
                 jmpret  i_eor, #o_absy nr               ' 59    absolute,y      eor $4400,y
                 nop                                     ' 5A
                 nop                                     ' 5B
@@ -552,7 +573,7 @@ mapping         nop                                     ' 00
                 jmpret  i_rrm, #o_zpgx nr               ' 76    zeropage,x      ror $44,x
                 nop                                     ' 77
 
-                nop                                     ' 78
+                jmp     #i_sei                          ' 78                    sei
                 nop                                     ' 79
                 nop                                     ' 7A
                 nop                                     ' 7B
@@ -624,7 +645,7 @@ mapping         nop                                     ' 00
                 jmpret  i_ldx, #o_zpgy nr               ' B6    zeropage,y      ldx $44,y
                 nop                                     ' B7
 
-                nop                                     ' B8
+                jmp     #i_clv                          ' B8                    clv
                 jmpret  i_lda, #o_absy nr               ' B9    absolute,y      lda $4400,y
                 jmp     #i_tsx                          ' BA                    tsx
                 nop                                     ' BB
@@ -660,7 +681,7 @@ mapping         nop                                     ' 00
                 jmpret  i_dec, #o_zpgx wc,nr            ' D6    zeropage,x      dec $44,x       (carry clear)
                 nop                                     ' D7
 
-                nop                                     ' D8
+                jmp     #i_cld                          ' D8                    cld
                 jmpret  i_cmp, #o_absy nr               ' D9    absolute,y      cmp $4400,y
                 nop                                     ' DA
                 nop                                     ' DB
@@ -696,7 +717,7 @@ mapping         nop                                     ' 00
                 jmpret  i_inc, #o_zpgx nr               ' F6    zeropage,x      inc $44,x
                 nop                                     ' F7
 
-                nop                                     ' F8
+                jmp     #i_sed                          ' F8                    sed
                 nop                                     ' F9
                 nop                                     ' FA
                 nop                                     ' FB
