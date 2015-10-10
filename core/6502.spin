@@ -1,13 +1,13 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/10
-''       Version: 0.10
+'' Last modified: 2015/10/11
+''       Version: 0.12
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
 '' - 6502 Emulator Copyright (C) Eric Ball and Darryl Biggar
 ''
-'' ToDo: ADC/SBC, BRK, RTI, PHA, PLA, PHP, PLP, ADC/SBC decimal mode
+'' ToDo: SBC, BRK, RTI, PHA, PLA, PHP, PLP, ADC/SBC decimal mode
 ''
 CON
   _clkmode = XTAL1|PLL16X
@@ -334,15 +334,22 @@ i_srm           rdbyte  tmpc, oadr                      '  +0 = carry clear when
                 jmp     #f_upd{ate}
 
 
-i_adc   {       rdbyte  tmpc, oadr                      ' fetch operand
+i_adc           rdbyte  tmpc, oadr                      ' fetch operand
                 test    r_st, #F_C                      ' fetch carry
-                addx    r_ac, tmpc
+                mov     tmps, r_ac                      ' ac(0)
+                addx    r_ac, tmpc                      ' ac(1) = ac(0) + op + carry
+
+                xor     tmpc, tmps                      '  ac(0) ^ op
+                xor     tmps, r_ac                      '  ac(0) ^ ac(1)
+                andn    tmps, tmpc                      ' (ac(0) ^ ac(1)) & !(ac(0) ^ op)
+                test    tmps, #$80 wc                   ' V
+                muxc    r_st, #F_V
 
                 test    r_ac, #$100 wc                  ' C
                 muxc    r_st, #F_C
                 and     r_ac, #$FF wz                   ' Z
                 jmp     #f_upda                         ' N
-}               
+                
 i_sbc           jmp     #stop
 
 
