@@ -37,7 +37,7 @@ PUB main : n | mbox[res_m]
     repeat
     while mbox{0} < 0
     n++
-  until mbox.word{0} <> @w_end
+  until mbox.word{0} <> @w_end or n > 500{10sec}
 
   println(mbox{0})
   println(n)
@@ -257,6 +257,16 @@ i_cmp           rdbyte  tmpc, oadr                      ' comparison value
                 muxc    r_st, #F_C
                 jmp     #f_upda
 
+i_cpx           rdbyte  tmpc, oadr                      ' comparison value
+                cmpsub  r_xi, tmpc wc,wz,nr             ' C,Z
+                muxc    r_st, #F_C
+                jmp     #f_updx
+                
+i_cpy           rdbyte  tmpc, oadr                      ' comparison value
+                cmpsub  r_yi, tmpc wc,wz,nr             ' C,Z
+                muxc    r_st, #F_C
+                jmp     #f_updy
+
 i_dix           sumnc   r_xi, #1                        ' dex(clear)/inx(set)
                 and     r_xi, #$FF wz
                 jmp     #f_updx
@@ -311,6 +321,9 @@ i_srm           rdbyte  tmpc, oadr                      '  +0 = carry clear when
                 muxc    r_st, #F_C                      '       capture bit 0
                 test    tmpc, #$80 wc                   '       N
                 jmp     #f_upd{ate}
+
+
+i_sbc           jmp     #stop
 
 
 i_clc           andn    r_st, #F_C
@@ -654,11 +667,11 @@ mapping         nop                                     ' 00
                 jmpret  i_ldx, #o_absy nr               ' BE    absolute,y      ldx $4400,y
                 nop                                     ' BF
 
-                nop                                     ' C0
+                jmpret  i_cpy, #o_imm nr                ' C0    immediate       cpy #$44
                 jmpret  i_cmp, #o_indx nr               ' C1    indirect,x      cmp ($44,x)
                 nop                                     ' C2
                 nop                                     ' C3
-                nop                                     ' C4
+                jmpret  i_cpy, #o_zpg nr                ' C4    zeropage        cpy $44
                 jmpret  i_cmp, #o_zpg nr                ' C5    zeropage        cmp $44
                 jmpret  i_dec, #o_zpg wc,nr             ' C6    zeropage        dec $44         (carry clear)
                 nop                                     ' C7
@@ -667,7 +680,7 @@ mapping         nop                                     ' 00
                 jmpret  i_cmp, #o_imm nr                ' C9    immediate       cmp #$44
                 jmpret  exec, #i_dix wc,nr              ' CA                    dex             (carry clear)
                 nop                                     ' CB
-                nop                                     ' CC
+                jmpret  i_cpy, #o_abs nr                ' CC    absolute        cpy $4400
                 jmpret  i_cmp, #o_abs nr                ' CD    absolute        cmp $4400
                 jmpret  i_dec, #o_abs wc,nr             ' CE    absolute        dec $4400       (carry clear)
                 nop                                     ' CF
@@ -690,39 +703,39 @@ mapping         nop                                     ' 00
                 jmpret  i_dec, #o_absx wc,nr            ' DE    absolute.x      dec $4400,x     (carry clear)
                 nop                                     ' DF
 
-                nop                                     ' E0
-                nop                                     ' E1
+                jmpret  i_cpx, #o_imm nr                ' E0    immediate       cpx #$44
+                jmpret  i_sbc, #o_indx nr               ' E1    indirect,x      sbc ($44,x)
                 nop                                     ' E2
                 nop                                     ' E3
-                nop                                     ' E4
-                nop                                     ' E5
+                jmpret  i_cpx, #o_zpg nr                ' E4    zeropage        cpx $44
+                jmpret  i_sbc, #o_zpg nr                ' E5    zeropage        sbc $44
                 jmpret  i_inc, #o_zpg nr                ' E6    zeropage        inc $44
                 nop                                     ' E7
 
                 jmpret  zero, #i_dix wc,nr              ' E8                    inx             (carry set)
-                nop                                     ' E9
+                jmpret  i_sbc, #o_imm nr                ' E9    immediate       sbc #$44
                 jmp     #rd_n{ext}                      ' EA                    nop
                 nop                                     ' EB
-                nop                                     ' EC
-                nop                                     ' ED
+                jmpret  i_cpx, #o_abs nr                ' EC    absolute        cpx $4400
+                jmpret  i_sbc, #o_abs nr                ' ED    absolute        sbc $4400
                 jmpret  i_inc, #o_abs nr                ' EE    absolute        inc $4400
                 nop                                     ' EF
 
                 jmpret  i_beq, #o_imm nr                ' F0    relative        beq $4400
-                nop                                     ' F1
+                jmpret  i_sbc, #o_indy nr               ' F1    indirect,y      sbc ($44),y
                 nop                                     ' F2
                 nop                                     ' F3
                 nop                                     ' F4
-                nop                                     ' F5
+                jmpret  i_sbc, #o_zpgx nr               ' F5    zeropage,x      sbc $44,x
                 jmpret  i_inc, #o_zpgx nr               ' F6    zeropage,x      inc $44,x
                 nop                                     ' F7
 
                 jmp     #i_sed                          ' F8                    sed
-                nop                                     ' F9
+                jmpret  i_sbc, #o_absy nr               ' F9    absolute,y      sbc $4400,y
                 nop                                     ' FA
                 nop                                     ' FB
                 nop                                     ' FC
-                nop                                     ' FD
+                jmpret  i_sbc, #o_absx nr               ' FD    absolute,x      sbc $4400,x
                 jmpret  i_inc, #o_absx nr               ' FE    absolute,x      inc $4400,x
                 nop                                     ' FF
 
