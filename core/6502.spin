@@ -463,13 +463,12 @@ setup           rdlong  base, par wz                    '  +0 =                 
                 org     setup
 
 base            res     1                               ' insn mapping table    <= setup+0      (%%)
-addr            res     1
-insn            res     1
-
+addr            res     1                               ' program counter
 oadr            res     1                               ' operand address
+insn            res     alias                           ' opcode
+tmpc            res     1                               ' insn operand
 
-tmps            res     1                               ' primarily stack operand
-tmpc            res     1
+tmps            res     1                               ' stack operand/backup
 
 tail            fit
 
