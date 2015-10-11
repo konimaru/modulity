@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
 '' Last modified: 2015/10/11
-''       Version: 0.13
+''       Version: 0.14
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
@@ -34,8 +34,12 @@ PUB main : n | mbox[res_m]
   repeat
   while mbox{0} < 0                                     ' startup complete
 
+  mbox{0} := NEGX|@s_init
   repeat
-    mbox{0} := NEGX|@wrapper
+  while mbox{0} < 0
+
+  repeat
+    mbox{0} := NEGX|@s_play
     repeat
     while mbox{0} < 0
     n++
@@ -69,7 +73,9 @@ PRI dump(address) | x, y
     
 DAT     byte    $FF[256]
 DAT
-wrapper byte    $20, word ENTRY
+s_init  byte    $20, word TARGET, $00
+        
+s_play  byte    $20, word ENTRY
 w_end   byte    $00
 
 DAT     long    'newtest2-7000.bin'
@@ -263,19 +269,17 @@ i_bit           rdbyte  tmpc, oadr                      ' fetch mask
                 jmp     #f_upd{ate}
 
                 
-i_cmp           rdbyte  tmpc, oadr                      ' comparison value
-                mov     tmps, r_ac
-f_compare       sub     tmps, tmpc wc,wz                ' C,Z
+i_cmp           mov     tmps, r_ac
+f_compare       rdbyte  tmpc, oadr                      ' comparison value
+                sub     tmps, tmpc wc,wz                ' C,Z
                 muxnc   r_st, #F_C
                 test    tmps, #$80 wc                   ' N
                 jmp     #f_upd{ate}
 
-i_cpx           rdbyte  tmpc, oadr                      ' comparison value
-                mov     tmps, r_xi
+i_cpx           mov     tmps, r_xi
                 jmp     #f_compare
                 
-i_cpy           rdbyte  tmpc, oadr                      ' comparison value
-                mov     tmps, r_yi
+i_cpy           mov     tmps, r_yi
                 jmp     #f_compare
 
 
@@ -465,9 +469,9 @@ setup           rdlong  base, par wz                    '  +0 =                 
 base            res     1                               ' insn mapping table    <= setup+0      (%%)
 addr            res     1                               ' program counter
 oadr            res     1                               ' operand address
+
 insn            res     alias                           ' opcode
 tmpc            res     1                               ' insn operand
-
 tmps            res     1                               ' stack operand/backup
 
 tail            fit
