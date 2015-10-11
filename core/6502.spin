@@ -230,6 +230,7 @@ i_ldy           rdbyte  r_yi, oadr wz                   ' fetch immediate value
 f_updy          test    r_yi, #$80 wc
                 jmp     #f_upd{ate}
 
+
 i_tax           mov     r_xi, r_ac wz
                 jmp     #f_updx
                 
@@ -337,7 +338,7 @@ i_srm           rdbyte  tmpc, oadr                      '  +0 = carry clear when
 i_adc           rdbyte  tmpc, oadr                      ' fetch operand
                 test    r_st, #F_C                      ' fetch carry
                 mov     tmps, r_ac                      ' ac(0)
-                addx    r_ac, tmpc                      ' ac(1) = ac(0) + op + carry
+                addx    r_ac, tmpc                      ' ac(1) = ac(0) + (op + carry)
 
                 xor     tmpc, tmps                      '  ac(0) ^ op
                 xor     tmps, r_ac                      '  ac(0) ^ ac(1)
@@ -350,7 +351,21 @@ i_adc           rdbyte  tmpc, oadr                      ' fetch operand
                 and     r_ac, #$FF wz                   ' Z
                 jmp     #f_upda                         ' N
                 
-i_sbc           jmp     #stop
+i_sbc           rdbyte  tmpc, oadr                      ' fetch operand
+                test    r_st, #F_F|F_C wc               ' fetch (inverted) carry                (++)
+                mov     tmps, r_ac                      ' ac(0)
+                subx    r_ac, tmpc                      ' ac(1) = ac(0) - (op + carry)
+
+                xor     tmpc, tmps                      '  ac(0) ^ op
+                xor     tmps, r_ac                      '  ac(0) ^ ac(1)
+                and     tmps, tmpc                      ' (ac(0) ^ ac(1)) & (ac(0) ^ op)
+                test    tmps, #$80 wc                   ' V
+                muxc    r_st, #F_V
+                
+                test    r_ac, #$100 wc                  ' C
+                muxnc   r_st, #F_C                      '                                       (++)
+                and     r_ac, #$FF wz                   ' Z
+                jmp     #f_upda                         ' N
 
 
 i_clc           andn    r_st, #F_C
