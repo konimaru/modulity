@@ -1,13 +1,13 @@
 ''
 ''        Author: Marko Lukat
 '' Last modified: 2015/10/11
-''       Version: 0.12
+''       Version: 0.13
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
 '' - 6502 Emulator Copyright (C) Eric Ball and Darryl Biggar
 ''
-'' ToDo: SBC, BRK, RTI, PHA, PLA, PHP, PLP, ADC/SBC decimal mode
+'' ToDo: BRK, RTI, PHA, PLA, PHP, PLP, ADC/SBC decimal mode
 ''
 CON
   _clkmode = XTAL1|PLL16X
