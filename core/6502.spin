@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/11
-''       Version: 0.14
+'' Last modified: 2015/10/12
+''       Version: 0.15
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
@@ -9,79 +9,6 @@
 ''
 '' ToDo: BRK, RTI, PHA, PLA, PHP, PLP, ADC/SBC decimal mode
 ''
-CON
-  _clkmode = XTAL1|PLL16X
-  _xinfreq = 5_000_000
-  
-CON
-  TARGET = $7000
-  ENTRY  = $7003
-  
-OBJ
-  serial: "FullDuplexSerial"
-
-PUB main : n | mbox[res_m]
-
-  init(-1, @mbox{0})
-  bytemove(TARGET, @sid, @sid_end-@sid)
-  longfill($7F00, -1, 64)
-
-  serial.start(31, 30, %0000, 115200)
-  waitcnt(clkfreq*3 + cnt)
-  serial.tx(0)
-  waitcnt(clkfreq*1 + cnt)
-
-  repeat
-  while mbox{0} < 0                                     ' startup complete
-
-  mbox{0} := NEGX|@s_init
-  repeat
-  while mbox{0} < 0
-
-  repeat
-    mbox{0} := NEGX|@s_play
-    repeat
-    while mbox{0} < 0
-    n++
-  until mbox.word{0} <> @w_end or n > 500{10sec}
-
-  println(mbox{0})
-  println(n)
-  println(cnt)
-  dump(mbox{0}-32)
-  serial.tx(13)
-  dump($0000)
-  serial.tx(13)
-  dump($7F00)
-  
-  waitpne(0, 0, 0)
-
-PRI println(value)
-
-  serial.hex(value, 8)
-  serial.tx(13)
-
-PRI dump(address) | x, y
-
-  repeat y from 0 to 15
-    serial.hex(address + y<<4, 4)
-    serial.str(string(": "))
-    repeat x from 0 to 15
-      serial.hex(byte[address + y<<4 + x], 2)
-      serial.tx(32)
-    serial.tx(13)
-    
-DAT     byte    $FF[256]
-DAT
-s_init  byte    $20, word TARGET, $00
-        
-s_play  byte    $20, word ENTRY
-w_end   byte    $00
-
-DAT     long    'newtest2-7000.bin'
-sid     file    "newtest2-7000.bin"
-sid_end
-        
 OBJ
   system: "core.con.system"
   
@@ -110,13 +37,15 @@ rd_n{ext}       rdbyte  insn, addr                      '  +0 = fetch opcode
         if_nz   add     addr, #1                        '  +8   advance PC (delay slot)
 
 exec            hubop   $, #%10000_000                  '  -4
-link            shr     exec, #9 wz
+link            and     oadr, mask
+                shr     exec, #9 wz
         if_nz   jmp     exec                            '       potential second pass
 
 stop            wrword  addr, par                       '       PC of unknown/invalid insn
                 wrword  r_st, stat                      '       current status
                 jmp     %%0
 
+mask            long    $7FFF
 
 rd_w{ord}       rdbyte  tmpc, addr                      ' LSB
                 add     addr, #1
@@ -182,7 +111,7 @@ o_indx          rdbyte  oadr, addr                      '  +0 = (zp,x)
 
 o_indy          rdbyte  oadr, addr                      '  +0 = (zp),y
                 add     addr, #1                        '  +8
-                shr     exec, #9                        '  -4   in-place link [1/2]
+                                                        '  -4
                 rdbyte  tmpc, oadr                      '  +0 = LSB
                 add     oadr, #1                        '  +8
                 and     oadr, #$FF                      '  -4
@@ -190,7 +119,7 @@ o_indy          rdbyte  oadr, addr                      '  +0 = (zp),y
                 shl     oadr, #8
                 or      oadr, tmpc
                 add     oadr, r_yi
-                jmp     exec                            '       in-place link [2/2]
+                jmp     #link                           ' process insn
 
 
 i_rts           call    #pull
