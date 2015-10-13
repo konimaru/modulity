@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/11
-''       Version: 0.1
+'' Last modified: 2015/10/14
+''       Version: 0.2
 ''
 CON
   _clkmode = XTAL1|PLL16X
@@ -12,24 +12,18 @@ CON
   ENTRY  = $7003
   
 OBJ
-  serial: "FullDuplexSerial"
   sidcog: "SIDcog"
     core: "6502"
   
 VAR
   long  mbox[core#res_m]
   
-PUB main : n | t, delta
+PUB main | t, delta
 
+  sidcog.start(27, 0)
   core.init(-1, @mbox{0})
   bytemove(TARGET, @sid, @sid_end-@sid)
   longfill($5400, 0, 8)
-  sidcog.start(27, 0)
-
-  serial.start(31, 30, %0000, 115200)
-  waitcnt(clkfreq*3 + cnt)
-  serial.tx(0)
-  waitcnt(clkfreq + cnt)
 
   delta := clkfreq / 50
 
@@ -42,28 +36,8 @@ PUB main : n | t, delta
   repeat
     usr(@s_play)
     waitcnt(t += delta)
-    dumpline($5400, 25)
-  while ++n < 32
-'   sidcog.updateRegisters($5400)
-  dump($0000)
+    sidcog.updateRegisters($5400)
 
-PRI dump(base)
-
-  serial.tx(13)
-  repeat 16
-    serial.hex(base, 4)
-    serial.str(string(": "))
-    base := dumpline(base, 16)
-    
-PRI dumpline(base, bcnt) : n
-
-  repeat bcnt
-    serial.hex(byte[base][n++], 2)
-    serial.tx(32)
-  serial.tx(13)
-
-  n += base
-  
 PRI usr(locn)
 
   mbox{0} := NEGX|locn
@@ -77,7 +51,7 @@ s_init  byte    $A9, $00
         byte    $00
         
 s_play  byte    $20, word ENTRY
-w_end   byte    $00
+        byte    $00
 
 DAT     long    'newtest2-7000.bin'
 sid     file    "newtest2-7000.bin"
