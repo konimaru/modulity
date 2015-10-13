@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
 '' Last modified: 2015/10/13
-''       Version: 0.16
+''       Version: 0.17
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
@@ -406,16 +406,16 @@ tmps            res     1                               ' stack operand/backup
 tail            fit
 
 CON
-  F_N = %10000000
-  F_V = %01000000
+  F_N = %10000000                                       ' r/w   sign
+  F_V = %01000000                                       ' r/w   overflow
 
-  F_F = %00100000
-  F_B = %00010000
+  F_F = %00100000                                       ' r/o   future expansion
+  F_B = %00010000                                       ' r/o   break
 
-  F_D = %00001000
-  F_I = %00000100
-  F_Z = %00000010
-  F_C = %00000001
+  F_D = %00001000                                       ' r/w   decimal
+  F_I = %00000100                                       ' r/w   interrupt enable/disable
+  F_Z = %00000010                                       ' r/w   zero
+  F_C = %00000001                                       ' r/w   carry
   
 CON
   zero  = $1F0                                          ' par (dst only)
