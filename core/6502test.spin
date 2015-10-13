@@ -43,9 +43,8 @@ PUB main : n | t, delta
     usr(@s_play)
     waitcnt(t += delta)
     dumpline($5400, 25)
-  while ++n < 9
+  while ++n < 32
 '   sidcog.updateRegisters($5400)
-  dump($7200)
   dump($0000)
 
 PRI dump(base)
