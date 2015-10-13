@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/12
-''       Version: 0.15
+'' Last modified: 2015/10/13
+''       Version: 0.16
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
@@ -269,7 +269,7 @@ i_srm           rdbyte  tmpc, oadr                      '  +0 = carry clear when
 
 
 i_adc           rdbyte  tmpc, oadr                      ' fetch operand
-                test    r_st, #F_C                      ' fetch carry
+                test    r_st, #F_C wc                   ' fetch carry
                 mov     tmps, r_ac                      ' ac(0)
                 addx    r_ac, tmpc                      ' ac(1) = ac(0) + (op + carry)
 
