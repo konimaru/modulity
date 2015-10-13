@@ -1,13 +1,13 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/13
-''       Version: 0.17
+'' Last modified: 2015/10/14
+''       Version: 0.18
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
 '' - 6502 Emulator Copyright (C) Eric Ball and Darryl Biggar
 ''
-'' ToDo: BRK, RTI, PHA, PLA, PHP, PLP, ADC/SBC decimal mode
+'' ToDo: BRK, RTI, ADC/SBC decimal mode
 ''
 OBJ
   system: "core.con.system"
@@ -360,6 +360,24 @@ i_bvc           test    r_st, #F_V wc
                 jmp     #rd_n{ext}
 
 
+i_pha           mov     tmps, r_ac
+                call    #push
+                jmp     #rd_n{ext}
+
+i_php           mov     tmps, r_st
+                call    #push
+                jmp     #rd_n{ext}
+                
+i_pla           call    #pull
+                mov     r_ac, tmps wz                   ' Z
+                jmp     #f_upda                         ' N
+                
+i_plp           call    #pull
+                mov     r_st, tmps
+                or      r_st, #F_F|F_B                  ' hardwired
+                jmp     #rd_n{ext}
+
+
 push            wrbyte  tmps, r_sp                      ' byte[sp--] := tmps
                 sub     r_sp, #1
                 or      r_sp, #$100                     ' keep page at 2n+1 (autowrap)          (##)
@@ -434,7 +452,7 @@ mapping         nop                                     ' 00
                 jmpret  i_slm, #o_zpg wc,nr             ' 06    zeropage        asl $44         (carry clear)
                 nop                                     ' 07
 
-                nop                                     ' 08
+                jmp     #i_php                          ' 08                    php
                 jmpret  i_ora, #o_imm nr                ' 09    immediate       ora #$44
                 jmpret  exec, #i_sla wc,nr              ' 0A                    asl a           (carry clear)
                 nop                                     ' 0B
@@ -470,7 +488,7 @@ mapping         nop                                     ' 00
                 jmpret  i_rlm, #o_zpg nr                ' 26    zeropage        rol $44
                 nop                                     ' 27
 
-                nop                                     ' 28
+                jmp     #i_plp                          ' 28                    plp
                 jmpret  i_and, #o_imm nr                ' 29    immediate       and #$44
                 jmp     #i_rla                          ' 2A                    rol a
                 nop                                     ' 2B
@@ -506,7 +524,7 @@ mapping         nop                                     ' 00
                 jmpret  i_srm, #o_zpg wc,nr             ' 46    zeropage        lsr $44         (carry clear)
                 nop                                     ' 47
 
-                nop                                     ' 48
+                jmp     #i_pha                          ' 48                    pha
                 jmpret  i_eor, #o_imm nr                ' 49    immediate       eor #$44
                 jmp     #i_sra                          ' 4A                    lsr a
                 nop                                     ' 4B
@@ -542,7 +560,7 @@ mapping         nop                                     ' 00
                 jmpret  i_rrm, #o_zpg nr                ' 66    zeropage        ror $44
                 nop                                     ' 67
 
-                nop                                     ' 68
+                jmp     #i_pla                          ' 68                    pla
                 jmpret  i_adc, #o_imm nr                ' 69    immediate       adc #$44
                 jmp     #i_rra                          ' 6A                    ror a
                 nop                                     ' 6B
