@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
 '' Last modified: 2015/10/15
-''       Version: 0.19
+''       Version: 0.20
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
@@ -120,6 +120,12 @@ o_indy          rdbyte  oadr, addr                      '  +0 = (zp),y
                 or      oadr, tmpc
                 add     oadr, r_yi
                 jmp     #link                           ' process insn
+
+o_map           mov     phsb, oadr
+                shr     phsb, #8                        ' extract page
+                rdbyte  tmpc, phsb                      ' read mapping (phsb + 2*frqb)
+                shl     tmpc, #8
+                xor     oadr, tmpc                      ' apply
 
 
 i_rti           call    #pull
@@ -407,7 +413,12 @@ r_st            long    F_F|F_B                         ' we only have 6 effecti
 
 setup           rdlong  base, par wz                    '  +0 =                                 (%%)
                 add     stat, par                       '  +8
+                movi    ctrb, #%0_00100_000             '  -4   loader support
         if_nz   wrlong  zero, par                       '  +0 =
+
+                mov     frqb, par
+                sub     frqb, #256                      ' page table precedes insn map
+                shr     frqb, #1{/2}                    ' added twice before access
 
                 jmp     %%0                             ' return
 
@@ -445,8 +456,28 @@ CON
 
   res_m = 1                                             ' UI support
   
-DAT
+DAT             long                                    ' page and insn mapping
 
+                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+
+                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+
+                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+
+                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+                
 mapping         nop                                     ' 00
                 jmpret  i_ora, #o_indx nr               ' 01    indirect,x      ora ($44,x)
                 nop                                     ' 02
