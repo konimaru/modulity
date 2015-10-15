@@ -1,13 +1,13 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/14
-''       Version: 0.18
+'' Last modified: 2015/10/15
+''       Version: 0.19
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
 '' - 6502 Emulator Copyright (C) Eric Ball and Darryl Biggar
 ''
-'' ToDo: BRK, RTI, ADC/SBC decimal mode
+'' ToDo: BRK, ADC/SBC decimal mode
 ''
 OBJ
   system: "core.con.system"
@@ -122,9 +122,13 @@ o_indy          rdbyte  oadr, addr                      '  +0 = (zp),y
                 jmp     #link                           ' process insn
 
 
-i_rts           call    #pull
+i_rti           call    #pull
+                mov     r_st, tmps                      ' restore status
+                or      r_st, #F_F|F_B                  ' hardwired
+
+i_rts           call    #pull                           ' rti(clear)/rts(set)
                 mov     addr, tmps                      ' LSB
-                add     addr, #1                        '                                       (&&)
+                addx    addr, #0                        '                                       (&&)
                 call    #pull
                 shl     tmps, #8                        ' MSB
                 add     addr, tmps
@@ -373,7 +377,7 @@ i_pla           call    #pull
                 jmp     #f_upda                         ' N
                 
 i_plp           call    #pull
-                mov     r_st, tmps
+                mov     r_st, tmps                      ' restore status
                 or      r_st, #F_F|F_B                  ' hardwired
                 jmp     #rd_n{ext}
 
@@ -384,8 +388,8 @@ push            wrbyte  tmps, r_sp                      ' byte[sp--] := tmps
 push_ret        ret
 
 pull            add     r_sp, #1                        ' tmps := byte[++sp]
-                test    r_sp, #$100 wc
-        if_nc   sub     r_sp, #$100                     ' keep page at 2n+1 (autowrap)          (##)
+                test    r_sp, #$100 wz
+        if_z    sub     r_sp, #$100                     ' keep page at 2n+1 (autowrap)          (##)
                 rdbyte  tmps, r_sp
 pull_ret        ret
 
@@ -515,7 +519,7 @@ mapping         nop                                     ' 00
                 jmpret  i_rlm, #o_absx nr               ' 3E    absolute,x      rol $4400,x
                 nop                                     ' 3F
 
-                nop                                     ' 40
+                jmpret  exec, #i_rti wc,nr              ' 40                    rti             (carry clear)
                 jmpret  i_eor, #o_indx nr               ' 41    indirect,x      eor ($44,x)
                 nop                                     ' 42
                 nop                                     ' 43
@@ -551,7 +555,7 @@ mapping         nop                                     ' 00
                 jmpret  i_srm, #o_absx wc,nr            ' 5E    absolute,x      lsr $4400,x     (carry clear)
                 nop                                     ' 5F
 
-                jmp     #i_rts                          ' 60                    rts
+                jmpret  zero, #i_rts wc,nr              ' 60                    rts             (carry set)
                 jmpret  i_adc, #o_indx nr               ' 61    indirect,x      adc ($44,x)
                 nop                                     ' 62
                 nop                                     ' 63
