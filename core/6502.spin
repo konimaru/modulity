@@ -413,7 +413,7 @@ r_st            long    F_F|F_B                         ' we only have 6 effecti
 
 setup           rdlong  base, par wz                    '  +0 =                                 (%%)
                 add     stat, par                       '  +8
-                movi    ctrb, #%0_00100_000             '  -4   loader support
+                movi    ctrb, #%0_00100_000             '  -4   mapping support
         if_nz   wrlong  zero, par                       '  +0 =
 
                 mov     frqb, par
