@@ -38,7 +38,7 @@ rd_n{ext}       rdbyte  insn, addr                      '  +0 = fetch opcode
 
 exec            hubop   $, #%10000_000                  '  -4
 link            mov     phsb, oadr              {map}   '       local copy
-                shr     phsb, #12               {map}   '       extract 4K page
+                shr     phsb, #10               {map}   '       extract 1K page
                 movs    page, phsb              {map}   '       phsb + 2*frqb
                 shr     exec, #9 wz                     '       delay slot
 page            xor     oadr, 0-0               {map}   '       apply page mapping
@@ -413,10 +413,25 @@ r_st            long    F_F|F_B                         ' we only have 6 effecti
 
                 long    0[$ & 1]                        ' make sure pmap starts at 2n
 
-pmap            long    $0000, $0000, $0000, $0000      ' 0xxx-3xxx
-                long    $0000, $0000, $0000, $0000      ' 4xxx-7xxx
-                long    $0000, $0000, $0000, $0000      ' 8xxx-Bxxx
-                long    $0000, $0000, $0000, $0000      ' Cxxx-Fxxx
+pmap            long    $0000, $0000, $0000, $0000      ' %%000xxxxx-%%003xxxxx
+                long    $0000, $0000, $0000, $0000      ' %%010xxxxx-%%013xxxxx
+                long    $0000, $0000, $0000, $0000      ' %%020xxxxx-%%023xxxxx
+                long    $0000, $0000, $0000, $0000      ' %%030xxxxx-%%033xxxxx
+
+                long    $0000, $0000, $0000, $0000      ' %%100xxxxx-%%103xxxxx
+                long    $0000, $0000, $0000, $0000      ' %%110xxxxx-%%113xxxxx
+                long    $0000, $0000, $0000, $0000      ' %%120xxxxx-%%123xxxxx
+                long    $0000, $0000, $0000, $0000      ' %%130xxxxx-%%133xxxxx
+
+                long    $0000, $0000, $0000, $0000      ' %%200xxxxx-%%203xxxxx
+                long    $0000, $0000, $0000, $0000      ' %%210xxxxx-%%213xxxxx
+                long    $0000, $0000, $0000, $0000      ' %%220xxxxx-%%223xxxxx
+                long    $0000, $0000, $0000, $0000      ' %%230xxxxx-%%233xxxxx
+
+                long    $0000, $0000, $0000, $0000      ' %%300xxxxx-%%303xxxxx
+                long    $0000, $0000, $0000, $0000      ' %%310xxxxx-%%313xxxxx
+                long    $0000, $0000, $0000, $0000      ' %%320xxxxx-%%323xxxxx
+                long    $0000, $0000, $0000, $0000      ' %%330xxxxx-%%333xxxxx
 
 ' Stuff below is re-purposed for temporary storage.
 
