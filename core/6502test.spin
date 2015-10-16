@@ -23,7 +23,6 @@ PUB main | t, delta
   sidcog.start(27, 0)
   core.init(-1, @mbox{0})
   bytemove(TARGET, @sid, @sid_end-@sid)
-  longfill($5400, 0, 8)
 
   delta := clkfreq / 50
 
@@ -36,7 +35,7 @@ PUB main | t, delta
   repeat
     usr(@s_play)
     waitcnt(t += delta)
-    sidcog.updateRegisters($5400)
+    sidcog.updateRegisters($7F00)
 
 PRI usr(locn)
 

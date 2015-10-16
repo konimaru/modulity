@@ -423,7 +423,7 @@ setup           rdlong  base, par wz                    '  +0 =                 
                 movi    ctrb, #%0_00100_000             '  -4   mapping support
         if_nz   wrlong  zero, par                       '  +0 =
 
-                mov     frqb, par
+                mov     frqb, base
                 sub     frqb, #256                      ' page table precedes insn map
                 shr     frqb, #1{/2}                    ' added twice before access
 
