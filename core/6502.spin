@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
 '' Last modified: 2015/10/16
-''       Version: 0.21
+''       Version: 0.22
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
@@ -37,14 +37,15 @@ rd_n{ext}       rdbyte  insn, addr                      '  +0 = fetch opcode
         if_nz   add     addr, #1                        '  +8   advance PC (delay slot)
 
 exec            hubop   $, #%10000_000                  '  -4
+
 link            mov     phsb, oadr              {map}   '       local copy
                 shr     phsb, #8                {map}   '       extract page
                 rdbyte  tmpc, phsb              {map}   '       phsb + 2*frqb
                 shl     tmpc, #8                {map}   '       align with page
                 xor     oadr, tmpc              {map}   '       apply page mapping
 
-                shr     exec, #9 wz                     '       delay slot
-        if_nz   jmp     exec                            '       potential second pass
+                shr     exec, #9
+                tjnz    exec, exec                      '       potential second pass
 
 stop            wrword  addr, par                       '       PC of unknown/invalid insn
                 wrword  r_st, stat                      '       current status
@@ -61,15 +62,6 @@ rd_w{ord}       rdbyte  tmpc, addr                      ' LSB
 rd_w_ret        ret
 
 
-o_ind           call    #rd_w{ord}
-                rdbyte  tmpc, oadr                      ' LSB
-                add     oadr, #1
-        if_e    sub     oadr, #$100                     ' restore page for ($--FF)
-                rdbyte  oadr, oadr                      ' MSB
-                shl     oadr, #8
-                or      oadr, tmpc
-                jmp     #link                           ' process insn
-                
 o_absx          call    #rd_w{ord}
                 add     oadr, r_xi
                 jmp     #link                           ' process insn
@@ -152,6 +144,17 @@ i_jsr           mov     tmps, addr                      ' stack is empty/descend
                 call    #push
 
 i_jmp           mov     addr, oadr                      ' transfer target location
+                jmp     #rd_n{ext}
+
+i_jnd           rdbyte  tmpc, oadr                      ' LSB
+                add     oadr, #1
+        if_e    sub     oadr, #$100                     ' restore page for ($--FF)
+                rdbyte  addr, oadr                      ' MSB
+                mov     phsb, addr              {map}   ' as index
+                rdbyte  oadr, phsb              {map}   ' xor mask
+                xor     addr, oadr              {map}
+                shl     addr, #8                        ' |
+                or      addr, tmpc                      ' assemble final address
                 jmp     #rd_n{ext}
 
 
@@ -603,7 +606,7 @@ mapping         nop                                     ' 00
                 jmpret  i_adc, #o_imm nr                ' 69    immediate       adc #$44
                 jmp     #i_rra                          ' 6A                    ror a
                 nop                                     ' 6B
-                jmpret  i_jmp, #o_ind nr                ' 6C    indirect        jmp ($4400)
+                jmpret  i_jnd, #o_abs nr                ' 6C    indirect        jmp ($4400)
                 jmpret  i_adc, #o_abs nr                ' 6D    absolute        adc $4400
                 jmpret  i_rrm, #o_abs nr                ' 6E    absolute        ror $4400
                 nop                                     ' 6F
