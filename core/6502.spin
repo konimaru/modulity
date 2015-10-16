@@ -38,10 +38,12 @@ rd_n{ext}       rdbyte  insn, addr                      '  +0 = fetch opcode
 
 exec            hubop   $, #%10000_000                  '  -4
 link            mov     phsb, oadr              {map}   '       local copy
-                shr     phsb, #10               {map}   '       extract 1K page
-                movs    page, phsb              {map}   '       phsb + 2*frqb
+                shr     phsb, #8                {map}   '       extract page
+                rdbyte  tmpc, phsb              {map}   '       phsb + 2*frqb
+                shl     tmpc, #8                {map}   '       align with page
+                xor     oadr, tmpc              {map}   '       apply page mapping
+
                 shr     exec, #9 wz                     '       delay slot
-page            xor     oadr, 0-0               {map}   '       apply page mapping
         if_nz   jmp     exec                            '       potential second pass
 
 stop            wrword  addr, par                       '       PC of unknown/invalid insn
@@ -411,28 +413,6 @@ r_xi            long    $00
 r_yi            long    $00
 r_st            long    F_F|F_B                         ' we only have 6 effective flags
 
-                long    0[$ & 1]                        ' make sure pmap starts at 2n
-
-pmap            long    $0000, $0000, $0000, $0000      ' %%000xxxxx-%%003xxxxx
-                long    $0000, $0000, $0000, $0000      ' %%010xxxxx-%%013xxxxx
-                long    $0000, $0000, $0000, $0000      ' %%020xxxxx-%%023xxxxx
-                long    $0000, $0000, $0000, $0000      ' %%030xxxxx-%%033xxxxx
-
-                long    $0000, $0000, $0000, $0000      ' %%100xxxxx-%%103xxxxx
-                long    $0000, $0000, $0000, $0000      ' %%110xxxxx-%%113xxxxx
-                long    $0000, $0000, $0000, $0000      ' %%120xxxxx-%%123xxxxx
-                long    $0000, $0000, $0000, $0000      ' %%130xxxxx-%%133xxxxx
-
-                long    $0000, $0000, $0000, $0000      ' %%200xxxxx-%%203xxxxx
-                long    $0000, $0000, $0000, $0000      ' %%210xxxxx-%%213xxxxx
-                long    $0000, $0000, $0000, $0000      ' %%220xxxxx-%%223xxxxx
-                long    $0000, $0000, $0000, $0000      ' %%230xxxxx-%%233xxxxx
-
-                long    $0000, $0000, $0000, $0000      ' %%300xxxxx-%%303xxxxx
-                long    $0000, $0000, $0000, $0000      ' %%310xxxxx-%%313xxxxx
-                long    $0000, $0000, $0000, $0000      ' %%320xxxxx-%%323xxxxx
-                long    $0000, $0000, $0000, $0000      ' %%330xxxxx-%%333xxxxx
-
 ' Stuff below is re-purposed for temporary storage.
 
 setup           rdlong  base, par wz                    '  +0 =                                 (%%)
@@ -440,7 +420,10 @@ setup           rdlong  base, par wz                    '  +0 =                 
                 movi    ctrb, #%0_00100_000             '  -4   mapping support
         if_nz   wrlong  zero, par                       '  +0 =
 
-                mov     frqb, #pmap/2                   ' added twice before access
+                mov     frqb, par
+                sub     frqb, #256                      ' page table precedes insn map
+                shr     frqb, #1{/2}                    ' added twice before access
+
                 jmp     %%0                             ' return
 
                 fit
@@ -477,7 +460,27 @@ CON
 
   res_m = 1                                             ' UI support
   
-DAT                                                     ' insn mapping
+DAT             long                                    ' page and insn mapping
+
+{$00-$0F}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+{$10-$1F}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+{$20-$2F}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+{$30-$3F}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+
+{$40-$4F}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+{$50-$5F}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+{$60-$6F}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+{$70-$7F}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+
+{$80-$8F}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+{$90-$9F}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+{$A0-$AF}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+{$B0-$BF}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+
+{$C0-$CF}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+{$D0-$DF}       byte    $00, $00, $00, $00, $AB, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+{$E0-$EF}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+{$F0-$FF}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 
 mapping         nop                                     ' 00
                 jmpret  i_ora, #o_indx nr               ' 01    indirect,x      ora ($44,x)
