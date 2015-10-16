@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/14
-''       Version: 0.2
+'' Last modified: 2015/10/16
+''       Version: 0.3
 ''
 CON
   _clkmode = XTAL1|PLL16X
@@ -25,6 +25,8 @@ PUB main | t, delta
   bytemove(TARGET, @sid, @sid_end-@sid)
 
   delta := clkfreq / 50
+
+  core.pmap($D4, $7F)
 
   repeat
   while mbox{0} < 0                                     ' startup complete
