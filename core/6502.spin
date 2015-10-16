@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/15
-''       Version: 0.20
+'' Last modified: 2015/10/16
+''       Version: 0.21
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
@@ -37,15 +37,17 @@ rd_n{ext}       rdbyte  insn, addr                      '  +0 = fetch opcode
         if_nz   add     addr, #1                        '  +8   advance PC (delay slot)
 
 exec            hubop   $, #%10000_000                  '  -4
-link            and     oadr, mask
-                shr     exec, #9 wz
+link            mov     phsb, oadr              {map}   '       local copy
+                shr     phsb, #12               {map}   '       extract 4K page
+                movs    page, phsb              {map}   '       phsb + 2*frqb
+                shr     exec, #9 wz                     '       delay slot
+page            xor     oadr, 0-0               {map}   '       apply page mapping
         if_nz   jmp     exec                            '       potential second pass
 
 stop            wrword  addr, par                       '       PC of unknown/invalid insn
                 wrword  r_st, stat                      '       current status
                 jmp     %%0
 
-mask            long    $7FFF
 
 rd_w{ord}       rdbyte  tmpc, addr                      ' LSB
                 add     addr, #1
@@ -409,6 +411,13 @@ r_xi            long    $00
 r_yi            long    $00
 r_st            long    F_F|F_B                         ' we only have 6 effective flags
 
+                long    0[$ & 1]                        ' make sure pmap starts at 2n
+
+pmap            long    $0000, $0000, $0000, $0000      ' 0xxx-3xxx
+                long    $0000, $0000, $0000, $0000      ' 4xxx-7xxx
+                long    $0000, $0000, $0000, $0000      ' 8xxx-Bxxx
+                long    $0000, $0000, $0000, $0000      ' Cxxx-Fxxx
+
 ' Stuff below is re-purposed for temporary storage.
 
 setup           rdlong  base, par wz                    '  +0 =                                 (%%)
@@ -416,10 +425,7 @@ setup           rdlong  base, par wz                    '  +0 =                 
                 movi    ctrb, #%0_00100_000             '  -4   mapping support
         if_nz   wrlong  zero, par                       '  +0 =
 
-                mov     frqb, par
-                sub     frqb, #256                      ' page table precedes insn map
-                shr     frqb, #1{/2}                    ' added twice before access
-
+                mov     frqb, #pmap/2                   ' added twice before access
                 jmp     %%0                             ' return
 
                 fit
@@ -456,28 +462,8 @@ CON
 
   res_m = 1                                             ' UI support
   
-DAT             long                                    ' page and insn mapping
+DAT                                                     ' insn mapping
 
-                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-
-                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-
-                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-
-                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-                byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
-                
 mapping         nop                                     ' 00
                 jmpret  i_ora, #o_indx nr               ' 01    indirect,x      ora ($44,x)
                 nop                                     ' 02
