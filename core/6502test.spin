@@ -4,14 +4,15 @@
 ''       Version: 0.3
 ''
 CON
-  _clkmode = XTAL1|PLL16X
-  _xinfreq = 5_000_000
+  _clkmode = client#_clkmode
+  _xinfreq = client#_xinfreq
   
 CON
-  TARGET = $7000
-  ENTRY  = $7003
+  AUDIO_L  = client#AUDIO_L
+  AUDIO_R  = client#AUDIO_R
   
 OBJ
+  client: "core.con.client.demoboard"
   sidcog: "SIDcog"
     core: "6502"
   
@@ -20,13 +21,14 @@ VAR
   
 PUB main | t, delta
 
-  sidcog.start(27, 0)
+  sidcog.start(AUDIO_R, AUDIO_L)
   core.init(-1, @mbox{0})
-  bytemove(TARGET, @sid, @sid_end-@sid)
+
+' processSID(@sid, @sid_end - @sid)
+  processSID(@sid3, @sid3_end - @sid3)
+' bytemove(TARGET, @sid, @sid_end-@sid)
 
   delta := clkfreq / 50
-
-  core.pmap($D4, $7F)
 
   repeat
   while mbox{0} < 0                                     ' startup complete
@@ -45,18 +47,49 @@ PRI usr(locn)
   repeat
   while mbox{0} < 0
 
+PRI processSID(addr, size) : load | base, pcnt
+
+  base := swap(word[addr][3])                           ' payload offset
+  size -= base                                          ' payload length
+  base += addr                                          ' absolute
+
+  ifnot load := swap(word[addr][4])
+    load := word[base]                                  ' little endian load address
+    base += 2                                           ' ... to be skipped
+    size -= 2
+
+  s_init[3] := byte[addr][11]
+  s_init[4] := byte[addr][10]                           ' swap(word[addr][5])
+
+  s_play[1] := byte[addr][13]                           
+  s_play[2] := byte[addr][12]                           ' swap(word[addr][6])
+
+  ifnot word[addr][6]
+    abort                                               ' played through interrupt handler
+
+  pcnt := (load.byte{0} + size + 255) & $FF00           ' covered pages (in bytes)
+  addr := $7F00 - pcnt                                  ' top page is used for SID mapping
+
+  bytemove(addr + load.byte{0}, base, size)             ' transfer payload
+  core.bmap(load.byte[1], addr.byte[1], pcnt >> 8)      ' map payload
+  core.pmap($D4, $7F)                                   ' map SID registers
+  
+PRI swap(value)
+
+  return value.byte{0} << 8 | value.byte[1]
+  
 DAT     byte    $FF[256]
 DAT
-s_init  byte    $A9, $00
-        byte    $20, word TARGET
-        byte    $00
-        
-s_play  byte    $20, word ENTRY
-        byte    $00
+s_init  byte    $A9, $00, $20, word $0000, $00, $00
+s_play  byte    $20, word $0000, $00, $00
 
-DAT     long    'newtest2-7000.bin'
-sid     file    "newtest2-7000.bin"
+DAT     long    'newtest2-7000.sid'
+sid     file    "newtest2-7000.sid"
 sid_end
+
+DAT     long    'Magic_Disk_64_1991_06.sid'
+sid3    file    "Magic_Disk_64_1991_06.sid"
+sid3_end
         
 DAT
 {{
