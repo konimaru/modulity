@@ -7,7 +7,8 @@
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
 '' - 6502 Emulator Copyright (C) Eric Ball and Darryl Biggar
 ''
-'' ToDo: BRK, ADC/SBC decimal mode
+'' ToDo: - RTI/RTS address mapping
+''       - BRK, ADC/SBC decimal mode
 ''
 OBJ
   system: "core.con.system"
