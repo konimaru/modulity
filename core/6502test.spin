@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/16
-''       Version: 0.3
+'' Last modified: 2015/10/17
+''       Version: 0.4
 ''
 CON
   _clkmode = client#_clkmode
@@ -13,6 +13,7 @@ CON
   
 OBJ
   client: "core.con.client.demoboard"
+' stream: "core.aux.stream"
   sidcog: "SIDcog"
     core: "6502"
   
@@ -24,9 +25,8 @@ PUB main | t, delta
   sidcog.start(AUDIO_R, AUDIO_L)
   core.init(-1, @mbox{0})
 
-' processSID(@sid, @sid_end - @sid)
-  processSID(@sid3, @sid3_end - @sid3)
-' bytemove(TARGET, @sid, @sid_end-@sid)
+  processSID(@sid, @sid_end - @sid)
+' processSID(@sid3, @sid3_end - @sid3)
 
   delta := clkfreq / 50
 
@@ -80,8 +80,11 @@ PRI swap(value)
   
 DAT     byte    $FF[256]
 DAT
-s_init  byte    $A9, $00, $20, word $0000, $00, $00
-s_play  byte    $20, word $0000, $00, $00
+s_init  byte    $A9, $00                                ' lda #0
+        byte    $20, word $0000                         ' jsr init
+        byte    $00, $00                                ' brk #0
+s_play  byte    $20, word $0000                         ' jsr play
+        byte    $00, $00                                ' brk #0
 
 DAT     long    'newtest2-7000.sid'
 sid     file    "newtest2-7000.sid"
