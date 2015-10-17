@@ -3,6 +3,8 @@
 '' Last modified: 2015/10/17
 ''       Version: 0.4
 ''
+'' ToDo: have a closer look into offsets $78/$79 (v2)
+''
 CON
   _clkmode = client#_clkmode
   _xinfreq = client#_xinfreq
