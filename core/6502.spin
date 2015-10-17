@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/16
-''       Version: 0.23
+'' Last modified: 2015/10/17
+''       Version: 0.24
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
@@ -25,6 +25,11 @@ PUB pmap(src, dst)
 
   mapping.byte[-256 + src] := src ^ dst
 
+PUB bmap(src, dst, pcnt)
+
+  repeat pcnt
+    pmap(src++, dst++)
+    
 DAT             org     0                               ' 6502 core
 
 core            jmpret  $, #setup                       '  -4
