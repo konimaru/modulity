@@ -39,12 +39,6 @@ PUB main : t | delta
     waitcnt(t += delta)
     sidcog.updateRegisters($7F00)
 
-PRI exec(locn)
-
-  mbox{0} := NEGX|locn
-  repeat
-  while mbox{0} < 0
-
 PRI processSID(name) : load | addr, size, pcnt, inst
 
   inst := @data{0}
@@ -80,6 +74,12 @@ PRI processSID(name) : load | addr, size, pcnt, inst
 
   exec(@s_init)                                         ' initialise player
   
+PRI exec(locn)
+
+  mbox{0} := NEGX|locn
+  repeat
+  while mbox{0} < 0
+
 PRI swap(value)
 
   return value.byte{0} << 8 | value.byte[1]
