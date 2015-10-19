@@ -1,9 +1,7 @@
 ''
 ''        Author: Marko Lukat
 '' Last modified: 2015/10/19
-''       Version: 0.6
-''
-'' ToDo: have a closer look into offsets $78/$79 (v2)
+''       Version: 0.7
 ''
 CON
   _clkmode = client#_clkmode
@@ -18,6 +16,7 @@ OBJ
   stream: "core.aux.stream"
   sidcog: "SIDcog"
     core: "6502"
+    util: "umath.mod"
   
 VAR
   long  mbox[core#res_m], data[stream#res_m]
@@ -29,14 +28,14 @@ PUB main : t | delta
   core.init(-1, @mbox{0})
   repeat while mbox{0} < 0                              ' startup complete
 
-  processSID(string("newtest2-7000.sid"))
+  processSID(string("built-in:0"))
 
-  delta := clkfreq / 50
+  delta := util.multdiv(clkfreq, 256, trunc(sidcog#C64_CLOCK_FREQ))
 
   t := cnt
   repeat
     exec(@s_play)
-    waitcnt(t += delta)
+    waitcnt(t += (delta*word[$7E04]) >> 8)
     sidcog.updateRegisters($7F00)
 
 PRI processSID(name) : load | addr, size, pcnt, inst
@@ -64,15 +63,24 @@ PRI processSID(name) : load | addr, size, pcnt, inst
     abort                                               ' played through interrupt handler
 
   pcnt := (load.byte{0} + size + 255) & $FF00           ' covered pages (in bytes)
-  addr := $7F00 - pcnt + load.byte{0}                   ' top page is used for SID mapping
+  addr := $7E00 - pcnt + load.byte{0}                   ' top pages are used for SID/CIA mapping
 
   stream.bget(inst, addr, size)                         ' transfer payload
-  stream.detach(inst)                                   ' done
-  
+
   core.bmap(load.byte[1], addr.byte[1], pcnt >> 8)      ' map payload
   core.pmap($D4, $7F)                                   ' map SID registers
+  core.pmap($DC, $7E)                                   ' map CIA registers (#1)
+  
+  word[$7E04] := lookupz(heap.byte[$15] & 1 : FREQ_VBL, FREQ_CIA)
 
   exec(@s_init)                                         ' initialise player
+
+CON
+  PAL      = trunc(sidcog#C64_CLOCK_FREQ == sidcog#PAL)
+  NTSC     = trunc(sidcog#C64_CLOCK_FREQ == sidcog#NTSC)
+
+  FREQ_CIA = round(sidcog#C64_CLOCK_FREQ/60.0)
+  FREQ_VBL = round(sidcog#C64_CLOCK_FREQ/50.0)*PAL+FREQ_CIA*NTSC
   
 PRI exec(locn)
 
