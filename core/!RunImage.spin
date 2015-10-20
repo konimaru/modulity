@@ -35,7 +35,7 @@ PUB main : t | delta
   t := cnt
   repeat
     exec(@s_play)
-    waitcnt(t += (delta*word[$7E04]) >> 8)
+    waitcnt(t += (delta * word[$7E04]) >> 8)
     sidcog.updateRegisters($7F00)
 
 PRI processSID(name) : load | addr, size, pcnt, inst
@@ -79,8 +79,8 @@ CON
   PAL      = trunc(sidcog#C64_CLOCK_FREQ == sidcog#PAL)
   NTSC     = trunc(sidcog#C64_CLOCK_FREQ == sidcog#NTSC)
 
-  FREQ_CIA = round(sidcog#C64_CLOCK_FREQ/60.0)
-  FREQ_VBL = round(sidcog#C64_CLOCK_FREQ/50.0)*PAL+FREQ_CIA*NTSC
+  FREQ_CIA = round(sidcog#C64_CLOCK_FREQ / 60.0)
+  FREQ_VBL = round(sidcog#C64_CLOCK_FREQ / 50.0) * PAL + FREQ_CIA * NTSC
   
 PRI exec(locn)
 
