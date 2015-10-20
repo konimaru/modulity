@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/19
-''       Version: 0.7
+'' Last modified: 2015/10/20
+''       Version: 0.8
 ''
 CON
   _clkmode = client#_clkmode
