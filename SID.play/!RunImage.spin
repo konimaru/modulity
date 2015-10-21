@@ -30,7 +30,7 @@ PUB main : t | delta
 
   processSID(string("built-in:0"))
 
-  delta := util.multdiv(clkfreq, 256, trunc(sidcog#C64_CLOCK_FREQ))
+  delta := util.div(clkfreq >> 24, clkfreq << 8, trunc(sidcog#C64_CLOCK_FREQ))
 
   t := cnt
   repeat
