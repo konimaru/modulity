@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/20
-''       Version: 0.8
+'' Last modified: 2015/10/22
+''       Version: 0.9
 ''
 CON
   _clkmode = client#_clkmode
@@ -81,6 +81,8 @@ CON
 
   FREQ_CIA = round(sidcog#C64_CLOCK_FREQ / 60.0)
   FREQ_VBL = round(sidcog#C64_CLOCK_FREQ / 50.0) * PAL + FREQ_CIA * NTSC
+
+  ESC      = 27
   
 PRI exec(locn)
 
@@ -96,9 +98,9 @@ DAT     byte    $FF[256]
 DAT
 s_init  byte    $A9, $00                                ' lda #0
         byte    $20, word $0000                         ' jsr init
-        byte    $00, $00                                ' brk #0
+        byte    ESC                                     ' invalid
 s_play  byte    $20, word $0000                         ' jsr play
-        byte    $00, $00                                ' brk #0
+        byte    ESC                                     ' invalid
 
 DAT
 {{

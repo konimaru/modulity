@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/17
-''       Version: 0.24
+'' Last modified: 2015/10/22
+''       Version: 0.25
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
