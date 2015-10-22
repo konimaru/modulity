@@ -535,7 +535,7 @@ mapping         jmpret  i_jsr, #o_brk nr                ' 00                    
                 jmpret  i_slm, #o_absx wc,nr            ' 1E    absolute,x      asl $4400,x     (carry clear)
                 nop                                     ' 1F
 
-                jmpret  i_jsr, #o_abs nr                ' 20    absolute        jsr $4400
+                jmpret  i_jsr, #o_abs wc,nr             ' 20    absolute        jsr $4400       (carry clear)
                 jmpret  i_and, #o_indx nr               ' 21    indirect,x      and ($44,x)
                 nop                                     ' 22
                 nop                                     ' 23
@@ -620,7 +620,7 @@ mapping         jmpret  i_jsr, #o_brk nr                ' 00                    
                 jmpret  i_adc, #o_imm nr                ' 69    immediate       adc #$44
                 jmp     #i_rra                          ' 6A                    ror a
                 nop                                     ' 6B
-                jmpret  i_jnd, #o_abs wc,nr             ' 6C    indirect        jmp ($4400)     (carry clear)
+                jmpret  i_jnd, #o_abs nr                ' 6C    indirect        jmp ($4400)
                 jmpret  i_adc, #o_abs nr                ' 6D    absolute        adc $4400
                 jmpret  i_rrm, #o_abs nr                ' 6E    absolute        ror $4400
                 nop                                     ' 6F
