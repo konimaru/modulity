@@ -7,8 +7,7 @@
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
 '' - 6502 Emulator Copyright (C) Eric Ball and Darryl Biggar
 ''
-'' ToDo: - RTI/RTS address mapping
-''       - BRK, ADC/SBC decimal mode
+'' ToDo: - BRK, ADC/SBC decimal mode
 ''
 OBJ
   system: "core.con.system"
@@ -126,12 +125,6 @@ o_indy          rdbyte  oadr, addr                      '  +0 = (zp),y
                 or      oadr, tmpc
                 add     oadr, r_yi
                 jmp     #link                           ' process insn
-
-o_map           mov     phsb, oadr
-                shr     phsb, #8                        ' extract page
-                rdbyte  tmpc, phsb                      ' read mapping (phsb + 2*frqb)
-                shl     tmpc, #8
-                xor     oadr, tmpc                      ' apply
 
 
 i_rti           call    #pull
