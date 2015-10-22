@@ -7,7 +7,7 @@
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
 '' - 6502 Emulator Copyright (C) Eric Ball and Darryl Biggar
 ''
-'' ToDo: - BRK, ADC/SBC decimal mode
+'' ToDo: - ADC/SBC decimal mode
 ''
 OBJ
   system: "core.con.system"
@@ -82,6 +82,10 @@ o_absy          call    #rd_w{ord}
 o_abs           call    #rd_w{ord}
                 jmp     #link                           ' process insn
 
+o_brk           neg     oadr, #2 wz                     ' $FFFE
+                add     addr, #1                        ' skip signature
+                jmp     #link                           ' process insn
+
 o_imm           mov     oadr, addr
                 add     addr, #1
                 jmp     #link                           ' process insn
@@ -148,6 +152,19 @@ i_jsr           mov     tmps, addr                      ' stack is empty/descend
 
 i_jmp           mov     addr, oadr                      ' transfer target location
                 jmp     #rd_n{ext}
+
+i_brk           mov     tmps, addr
+                ror     tmps, #8                        ' MSB 1st
+                call    #push
+                rol     tmps, #8                        ' LSB 2nd
+                call    #push
+
+                mov     tmps, r_st
+                or      tmps, #F_B                      ' mark origin
+                call    #push
+                or      r_st, #F_I                      ' disable interrupts
+
+'               jmp     ($FFFE)
 
 i_jnd           rdbyte  tmpc, oadr                      ' LSB
                 add     oadr, #1
@@ -488,7 +505,7 @@ DAT             long                                    ' page and insn mapping
 {$E0-$EF}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 {$F0-$FF}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 
-mapping         nop                                     ' 00
+mapping         jmpret  i_brk, #o_brk nr                ' 00                    brk #$44
                 jmpret  i_ora, #o_indx nr               ' 01    indirect,x      ora ($44,x)
                 nop                                     ' 02
                 nop                                     ' 03
