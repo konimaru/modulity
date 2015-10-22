@@ -84,7 +84,7 @@ o_abs           call    #rd_w{ord}
 
 o_brk           neg     oadr, #2 wz                     ' $FFFE
                 add     addr, #1                        ' skip signature
-                jmp     #link                           ' process insn
+                jmpret  zero, #link wc,nr               ' process insn                          (carry set)
 
 o_imm           mov     oadr, addr
                 add     addr, #1
@@ -143,21 +143,15 @@ i_rts           call    #pull                           ' rti(clear)/rts(set)
                 add     addr, tmps
                 jmp     #rd_n{ext}
 
-i_jsr           mov     tmps, addr                      ' stack is empty/descending
-                sub     tmps, #1                        '                                       (&&)
+i_jsr           mov     tmps, addr                      ' jsr(clear)/brk(set)
+        if_nc   sub     tmps, #1                        '                                       (&&)
                 ror     tmps, #8                        ' MSB 1st
                 call    #push
                 rol     tmps, #8                        ' LSB 2nd
                 call    #push
 
-i_jmp           mov     addr, oadr                      ' transfer target location
-                jmp     #rd_n{ext}
-
-i_brk           mov     tmps, addr
-                ror     tmps, #8                        ' MSB 1st
-                call    #push
-                rol     tmps, #8                        ' LSB 2nd
-                call    #push
+i_jmp   if_nc   mov     addr, oadr                      ' transfer target location
+        if_nc   jmp     #rd_n{ext}
 
                 mov     tmps, r_st
                 or      tmps, #F_B                      ' mark origin
@@ -505,7 +499,7 @@ DAT             long                                    ' page and insn mapping
 {$E0-$EF}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 {$F0-$FF}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 
-mapping         jmpret  i_brk, #o_brk nr                ' 00                    brk #$44
+mapping         jmpret  i_jsr, #o_brk nr                ' 00                    brk #$44
                 jmpret  i_ora, #o_indx nr               ' 01    indirect,x      ora ($44,x)
                 nop                                     ' 02
                 nop                                     ' 03
@@ -590,7 +584,7 @@ mapping         jmpret  i_brk, #o_brk nr                ' 00                    
                 jmpret  i_eor, #o_imm nr                ' 49    immediate       eor #$44
                 jmp     #i_sra                          ' 4A                    lsr a
                 nop                                     ' 4B
-                jmpret  i_jmp, #o_abs nr                ' 4C    absolute        jmp $4400
+                jmpret  i_jmp, #o_abs wc,nr             ' 4C    absolute        jmp $4400       (carry clear)
                 jmpret  i_eor, #o_abs nr                ' 4D    absolute        eor $4400
                 jmpret  i_srm, #o_abs wc,nr             ' 4E    absolute        lsr $4400       (carry clear)
                 nop                                     ' 4F
@@ -626,7 +620,7 @@ mapping         jmpret  i_brk, #o_brk nr                ' 00                    
                 jmpret  i_adc, #o_imm nr                ' 69    immediate       adc #$44
                 jmp     #i_rra                          ' 6A                    ror a
                 nop                                     ' 6B
-                jmpret  i_jnd, #o_abs nr                ' 6C    indirect        jmp ($4400)
+                jmpret  i_jnd, #o_abs wc,nr             ' 6C    indirect        jmp ($4400)     (carry clear)
                 jmpret  i_adc, #o_abs nr                ' 6D    absolute        adc $4400
                 jmpret  i_rrm, #o_abs nr                ' 6E    absolute        ror $4400
                 nop                                     ' 6F
