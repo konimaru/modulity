@@ -143,25 +143,25 @@ i_rts           call    #pull                           ' rti(clear)/rts(set)
                 add     addr, tmps
                 jmp     #rd_n{ext}
 
-i_jsr           mov     tmps, addr                      ' jsr(clear)/brk(set)
+i_jsr           mov     tmps, addr              {brk}   ' jsr(clear)/brk(set)
         if_nc   sub     tmps, #1                        '                                       (&&)
-                ror     tmps, #8                        ' MSB 1st
-                call    #push
-                rol     tmps, #8                        ' LSB 2nd
-                call    #push
+                ror     tmps, #8                {brk}   ' MSB 1st
+                call    #push                   {brk}
+                rol     tmps, #8                {brk}   ' LSB 2nd
+                call    #push                   {brk}
 
 i_jmp   if_nc   mov     addr, oadr                      ' transfer target location
         if_nc   jmp     #rd_n{ext}
 
-                mov     tmps, r_st
-                or      tmps, #F_B                      ' mark origin
-                call    #push
-                or      r_st, #F_I                      ' disable interrupts
+                mov     tmps, r_st              {brk}
+                or      tmps, #F_B              {brk}   ' mark origin
+                call    #push                   {brk}
+                or      r_st, #F_I              {brk}   ' disable interrupts
 
 '               jmp     ($FFFE)
 
-i_jnd           rdbyte  tmpc, oadr                      ' LSB
-                add     oadr, #1
+i_jnd           rdbyte  tmpc, oadr              {brk}   ' LSB
+                add     oadr, #1                {...}
         if_e    sub     oadr, #$100                     ' restore page for ($--FF)
                 rdbyte  addr, oadr                      ' MSB
                 mov     phsb, addr              {map}   ' as index
