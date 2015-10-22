@@ -154,7 +154,6 @@ i_jmp   if_nc   mov     addr, oadr                      ' transfer target locati
         if_nc   jmp     #rd_n{ext}
 
                 mov     tmps, r_st              {brk}
-                or      tmps, #F_B              {brk}   ' mark origin
                 call    #push                   {brk}
                 or      r_st, #F_I              {brk}   ' disable interrupts
 
