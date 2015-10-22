@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
 '' Last modified: 2015/10/22
-''       Version: 0.25
+''       Version: 0.26
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
@@ -82,7 +82,7 @@ o_absy          call    #rd_w{ord}
 o_abs           call    #rd_w{ord}
                 jmp     #link                           ' process insn
 
-o_brk           neg     oadr, #2 wz                     ' $FFFE
+o_brk           mov     oadr, locn wz                   ' $FFFE
                 add     addr, #1                        ' skip signature
                 jmpret  zero, #link wc,nr               ' process insn                          (carry set)
 
@@ -359,6 +359,7 @@ f_rel{ative}    rdbyte  tmpc, oadr
                 shl     tmpc, #24
                 sar     tmpc, #24
                 add     addr, tmpc
+                and     addr, mask                      ' limit to 64K
                 jmp     #rd_n{ext}
 
 i_bpl           test    r_st, #F_N wc
@@ -422,6 +423,8 @@ pull_ret        ret
 ' initialised data and/or presets
 
 stat            long    +2                              ' status location
+locn            long    $FFFE                           ' interrupt vector location
+mask            long    $FFFF                           ' relative jump wrap-around
 
 r_sp            long    $7FFF                           ' page must be 2n+1                     (##)
 r_ac            long    $00
