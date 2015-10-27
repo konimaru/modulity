@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/22
-''       Version: 0.26
+'' Last modified: 2015/10/27
+''       Version: 0.27
 ''
 '' acknowledgements
 '' - 6502 CORE (C) 2009-10-07 Eric Ball
@@ -9,9 +9,6 @@
 ''
 '' ToDo: - ADC/SBC decimal mode
 ''
-OBJ
-  system: "core.con.system"
-  
 PUB null
 '' This is not a top level object.
 
@@ -19,7 +16,11 @@ PUB init(ID, mailbox)
 
   long[mailbox]{0} := NEGX|@mapping
   
-  return system.launch(ID, @core, mailbox)
+  ifnot (ID >> 3)
+    coginit(ID++, @core, mailbox)
+  elseifnot ID := cognew(@core, mailbox) + 1
+    abort
+  return ID
 
 PUB pmap(src, dst)
 
