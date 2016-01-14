@@ -1,0 +1,3 @@
+[submodule "waitvid.2048"]
+	path = waitvid.2048
+	url = https://github.com/konimaru/waitvid.2048
