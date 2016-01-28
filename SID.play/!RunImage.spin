@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2015/10/22
-''       Version: 0.9
+'' Last modified: 2016/01/28
+''       Version: 0.10
 ''
 CON
   _clkmode = client#_clkmode
@@ -12,7 +12,7 @@ CON
   AUDIO_R  = client#AUDIO_R
 
 OBJ
-  client: "core.con.client.demoboard"
+  client: "core.con.client.badge"
   stream: "core.aux.stream"
   sidcog: "SIDcog"
     core: "6502"
@@ -28,14 +28,14 @@ PUB main : t | delta
   core.init(-1, @mbox{0})
   repeat while mbox{0} < 0                              ' startup complete
 
-  processSID(string("built-in:0"))
+  processSID(string("built-in:2"))
 
   delta := util.div(clkfreq >> 24, clkfreq << 8, trunc(sidcog#C64_CLOCK_FREQ))
 
   t := cnt
   repeat
     exec(@s_play)
-    waitcnt(t += (delta * word[$7E04]) >> 8)
+    waitcnt(t += (delta * word[$7D04]) >> 8)
     sidcog.updateRegisters($7F00)
 
 PRI processSID(name) : load | addr, size, pcnt, inst
@@ -63,15 +63,18 @@ PRI processSID(name) : load | addr, size, pcnt, inst
     abort                                               ' played through interrupt handler
 
   pcnt := (load.byte{0} + size + 255) & $FF00           ' covered pages (in bytes)
-  addr := $7E00 - pcnt + load.byte{0}                   ' top pages are used for SID/CIA mapping
+  addr := $7D00 - pcnt + load.byte{0}                   ' top pages are used for SID/CIA mapping
 
   stream.bget(inst, addr, size)                         ' transfer payload
 
   core.bmap(load.byte[1], addr.byte[1], pcnt >> 8)      ' map payload
-  core.pmap($D4, $7F)                                   ' map SID registers
-  core.pmap($DC, $7E)                                   ' map CIA registers (#1)
+  core.pmap($D4, $7F)                                   ' map SID registers, shared with stack
+  core.pmap($DC, $7D)                                   ' map CIA registers (#1)
+
+' core.pmap($01, $7F)                                   ' map stack (core enforces $7F), optional
+' core.pmap($00, $7E)                                   ' map zpage (core enforces $7E), optional
   
-  word[$7E04] := lookupz(heap.byte[$15] & 1 : FREQ_VBL, FREQ_CIA)
+  word[$7D04] := lookupz(heap.byte[$15] & 1 : FREQ_VBL, FREQ_CIA)
 
   exec(@s_init)                                         ' initialise player
 
@@ -94,7 +97,6 @@ PRI swap(value)
 
   return value.byte{0} << 8 | value.byte[1]
   
-DAT     byte    $FF[256]
 DAT
 s_init  byte    $A9, $00                                ' lda #0
         byte    $20, word $0000                         ' jsr init

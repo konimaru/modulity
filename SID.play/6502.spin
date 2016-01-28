@@ -107,25 +107,25 @@ o_zpgy          rdbyte  oadr, addr
                 add     addr, #1
                 jmp     #link                           ' process insn
 
-o_indx          rdbyte  oadr, addr                      '  +0 = (zp,x)
-                add     oadr, r_xi                      '  +8
-                and     oadr, #$FF                      '  -4
-                rdbyte  tmpc, oadr                      '  +0 = LSB
-                add     oadr, #1                        '  +8
-                and     oadr, #$FF                      '  -4
-                rdbyte  oadr, oadr                      '  +0 = MSB
+o_indx          rdbyte  phsa, addr                      '  +0 = (zp,x)
+                add     phsa, r_xi                      '  +8
+                and     phsa, #$FF                      '  -4
+                rdbyte  tmpc, phsa                      '  +0 = LSB
+                add     phsa, #1                        '  +8
+                and     phsa, #$FF                      '  -4
+                rdbyte  oadr, phsa                      '  +0 = MSB
                 shl     oadr, #8
                 or      oadr, tmpc
                 add     addr, #1
                 jmp     #link                           ' process insn
 
-o_indy          rdbyte  oadr, addr                      '  +0 = (zp),y
+o_indy          rdbyte  phsa, addr                      '  +0 = (zp),y
                 add     addr, #1                        '  +8
-                                                        '  -4
-                rdbyte  tmpc, oadr                      '  +0 = LSB
-                add     oadr, #1                        '  +8
-                and     oadr, #$FF                      '  -4
-                rdbyte  oadr, oadr                      '  +0 = MSB
+                and     phsa, #$FF                      '  -4   write-back, anything will do
+                rdbyte  tmpc, phsa                      '  +0 = LSB
+                add     phsa, #1                        '  +8
+                and     phsa, #$FF                      '  -4
+                rdbyte  oadr, phsa                      '  +0 = MSB
                 shl     oadr, #8
                 or      oadr, tmpc
                 add     oadr, r_yi
@@ -437,16 +437,21 @@ r_st            long    F_F|F_B                         ' we only have 6 effecti
 
 setup           rdlong  base, par wz                    '  +0 =                                 (%%)
                 add     stat, par                       '  +8
-                movi    ctrb, #%0_00100_000             '  -4   mapping support
+                movi    ctrb, #%0_11111_000             '  -4   mapping support
         if_nz   wrlong  zero, par                       '  +0 =
 
+                movi    ctra, #%0_11111_000             ' mapping support (zero page)
+                mov     frqa, r_zp                      ' page $7E
+                
                 mov     frqb, base
                 sub     frqb, #256                      ' page table precedes insn map
                 shr     frqb, #1{/2}                    ' added twice before access
 
                 jmp     %%0                             ' return
 
-                fit
+r_zp            long    $7E00/2
+
+EOD{ata}        fit
 
 ' uninitialised data and/or temporaries
 
@@ -482,7 +487,7 @@ CON
   
 DAT             long                                    ' page and insn mapping
 
-{$00-$0F}       byte    $00, $7E, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
+{$00-$0F}       byte    $7E, $7E, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 {$10-$1F}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 {$20-$2F}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
 {$30-$3F}       byte    $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00, $00
