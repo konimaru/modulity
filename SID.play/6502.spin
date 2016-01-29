@@ -410,7 +410,7 @@ i_plp           call    #pull
                 jmp     #rd_n{ext}
 
 
-push            wrbyte  tmps, r_sp                      ' byte[sp--] := tmps
+push            wrbyte  tmps, r_sp                      ' byte[sp--] := tmps, fn must preserve flags
                 sub     r_sp, #1
                 or      r_sp, #$100                     ' keep page at 2n+1 (autowrap)          (##)
 push_ret        ret
