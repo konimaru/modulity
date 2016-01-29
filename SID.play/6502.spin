@@ -457,7 +457,7 @@ EOD{ata}        fit
 
                 org     setup
 
-base            res     1                               ' insn mapping table    <= setup+0      (%%)
+base            res     1                               ' insn mapping table    == setup+0      (%%)
 addr            res     1                               ' program counter
 oadr            res     1                               ' operand address
 
