@@ -41,8 +41,8 @@ PRI strncmp(one, two, ccnt) | c
     if (result := c - byte[two++]) or not c
       return
 
-DAT built_in_0  long    'newtest2-7000.sid'             ' built-in binaries
-                file    "newtest2-7000.sid"
+DAT built_in_0  long    'Area 64.sid'                   ' built-in binaries
+                file    "Area 64.sid"
 built_in_0_end
 DAT built_in_1  long    'Magic_Disk_64_1991_06.sid'     ' |
                 file    "Magic_Disk_64_1991_06.sid"
