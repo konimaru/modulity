@@ -55,6 +55,10 @@ PUB bget(transfer, wait{boolean})
     repeat
     while long[transfer][T_LEN]                         ' wait for completion
     
+PUB complete(transfer)
+
+  return not long[transfer][T_LEN]                      ' transfer size 0 -> done
+  
 PUB read(dst, src, length)
 
   return bget(@dst, TRUE)                               ' synchronous read
@@ -62,10 +66,6 @@ PUB read(dst, src, length)
 PUB reada(transfer)
 
   return bget(transfer, FALSE)                          ' asynchronous read
-  
-PUB complete(transfer)
-
-  return not long[transfer][T_LEN]                      ' transfer size 0 -> done
   
 PRI task : length | mark, transfer, value
 
