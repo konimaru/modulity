@@ -2,8 +2,8 @@
 '' Parallax eBadge I2C high level device handler
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2016/02/17
-''       Version: 0.6
+'' Last modified: 2016/02/19
+''       Version: 0.7
 ''
 '' acknowledgements
 '' - MMA7660FC 3-Axis accelerometer interface, Copyright (c) 2015 Jon McPhalen
@@ -95,13 +95,15 @@ PRI task : length | mark, transfer, value
       if tail <> head                                   ' transfers available
         transfer := transfers[tail]                     ' grab active transfer
 
-        ifnot long[transfer][T_LEN] -= length := long[transfer][T_LEN] <# 2048
-          tail := (tail + 1) & 7                        ' remove transfer
-
+        length := long[transfer][T_LEN] <# 2048
         util.readBytes(prom#ID, long[transfer][T_SRC], long[transfer][T_DST], length)
 
         long[transfer][T_DST] += length                 ' |       
         long[transfer][T_SRC] += length                 ' update transfer
+        
+        ifnot long[transfer][T_LEN] -= length
+          tail := (tail + 1) & 7                        ' remove transfer
+
     while (cnt - mark) < clkfreq >> 2                             
 
     mark += clkfreq >> 2                                          
