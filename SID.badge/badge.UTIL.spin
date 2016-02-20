@@ -53,11 +53,11 @@ PUB bget(transfer, wait{boolean})
 
   if wait
     repeat
-    while long[transfer][T_LEN]                         ' wait for completion
+    while long[transfer][T_LEN] > 0                     ' wait for completion
     
 PUB complete(transfer)
 
-  return not long[transfer][T_LEN]                      ' transfer size 0 -> done
+  return long[transfer][T_LEN] =< 0                     ' transfer size 0 or error -> done
   
 PUB read(dst, src, length)
 
