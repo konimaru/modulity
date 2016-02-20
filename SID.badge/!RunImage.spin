@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2016/02/11
-''       Version: 0.10
+'' Last modified: 2016/02/21
+''       Version: 0.11
 ''
 CON
   _clkmode = client#_clkmode
@@ -31,7 +31,7 @@ VAR
   long  LEDs, pads
 
   long  xyzt, orientation, up, down
-  long  stack[32]
+  long  stack[64]
   
 PUB selftest : n | now
 
@@ -94,8 +94,11 @@ PRI init                                                ' driver/task initialisa
   draw.swap(0)                                          ' show initial screen
   draw.cmd1(SSD1306#DISPLAY_ON)                         ' display on
 
-  util.init(SCL, SDA, @xyzt, $04040C08)                 ' accelerometer and EEPROM
+  SIDcog.start(AUDIO_R, AUDIO_L)                        ' 8580 softcore
+  core.init(-1, @mbox{0})                               ' 6502 softcore
 
+  util.init(SCL, SDA, @xyzt, $04040C08)                 ' accelerometer and EEPROM
+  
 ' runtime support
 
   up.word[1]   := constant(SSD1306#SET_COM_SCAN_DEC << 8 | SSD1306#SET_SEGMENT_REMAP|1)
@@ -108,12 +111,13 @@ PRI init                                                ' driver/task initialisa
 
 ' background tasks
 
-  cognew(bg_0, @stack{$0})                              ' establish PAD/LED link(s)
-
+  cognew(SID_task, @stack{0})                           ' SID player
+' cognew(bg_0, @stack{$0})                              ' establish PAD/LED link(s)
+  
 CON
   #-3, FS, SX, SY                                       ' sprite header indices
   
-DAT
+DAT                                                     ' primary bitmap
         word    1920            ' frame size
         word    240, 64         ' width, height
 
@@ -181,5 +185,97 @@ drwuro  word    $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $
         word    $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000
         word    $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000
         word    $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000, $0000
+
+CON
+  PAL      = trunc(sidcog#C64_CLOCK_FREQ == sidcog#PAL)
+  NTSC     = trunc(sidcog#C64_CLOCK_FREQ == sidcog#NTSC)
+
+  FREQ_CIA = round(sidcog#C64_CLOCK_FREQ / 60.0)
+  FREQ_VBL = round(sidcog#C64_CLOCK_FREQ / 50.0) * PAL + FREQ_CIA * NTSC
+
+  ESC      = 27
+  
+VAR
+  long  mbox[core#res_m], heap[32]
+
+PRI SID_task : now | delta                              ' audio background task
+{
+000000 05630080 1c8805e3 101e226b 17573289
+000010 0f9b49e0 0c67597b 16dc65e2 00000000
+}
+  repeat
+  while mbox{0} < 0                                     ' startup complete
+
+  delta := math.div(clkfreq >> 24, clkfreq << 8, trunc(sidcog#C64_CLOCK_FREQ))
+
+  SID_load($17573289|$8000)
+
+  now := cnt
+  repeat
+    SID_exec(@s_play)
+    waitcnt(now += (delta * word[$7D04]) >> 8)
+    sidcog.updateRegisters($7F00)
+
+PRI SID_load(name) : load | addr, size, pcnt
+
+  size := name.word[1]                                  ' open resource
+
+  SID_bget(@name, @heap{0}, $16)                        ' read minimal header
+  load := SID_swap(heap.word[3])                        ' payload offset
+  SID_bget(@name, @heap.byte[$16], load - $16)          ' remainder
+
+  size -= load                                          ' payload length
+
+  ifnot load := SID_swap(heap.word[4])
+    SID_bget(@name, @load, 2)                           ' little endian load address
+    size -= 2
+
+  s_init[3] := heap.byte[11]
+  s_init[4] := heap.byte[10]                            ' swap(data.word[5])
+
+  ifnot heap.word[6]
+    abort                                               ' played through interrupt handler
+
+  pcnt := (load.byte{0} + size + 255) & $FF00           ' covered pages (in bytes)
+  addr := $7D00 - pcnt + load.byte{0}                   ' top pages are used for SID/CIA mapping
+
+  SID_bget(@name, addr, size)                           ' transfer payload
+
+  core.bmap(load.byte[1], addr.byte[1], pcnt >> 8)      ' map payload
+  core.pmap($D4, $7F)                                   ' map SID registers, shared with stack
+  core.pmap($DC, $7D)                                   ' map CIA registers (#1)
+
+' core.pmap($01, $7F)                                   ' map stack (core enforces $7F), optional
+' core.pmap($00, $7E)                                   ' map zpage (core enforces $7E), optional
+  
+  word[$7D04] := lookupz(heap.byte[$15] & 1 : FREQ_VBL, FREQ_CIA)
+
+  SID_exec(@s_init)                                     ' initialise player
+
+  s_play[1] := heap.byte[13]                            
+  s_play[2] := heap.byte[12]                            ' swap(data.word[6])
+
+PRI SID_bget(inst, buffer, length)                        
+
+  util.read(buffer, word[inst]{0}, length)
+
+  word[inst]{0} += length
+  word[inst][1] -= length
+  
+PRI SID_exec(locn)                                      ' 6502 connector
+
+  mbox{0} := NEGX|locn
+  repeat
+  while mbox{0} < 0
+
+PRI SID_swap(value)                                       
+
+  return value.byte{0} << 8 | value.byte[1]
+  
+DAT                                                     ' player entry points
+
+s_init  byte    $A9, $00                                ' lda #0
+s_play  byte    $20, word $0000                         ' jsr init/play
+        byte    ESC                                     ' invalid
 
 DAT
