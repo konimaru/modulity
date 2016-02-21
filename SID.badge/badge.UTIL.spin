@@ -41,7 +41,11 @@ PUB init(SCL, SDA, base, layout) : n
   lock := locknew                                       ' reserve lock
   cognew(task, @stack{0})                               ' start helper task
   
-PUB bget(transfer, wait{boolean})
+PUB complete(transfer)
+
+  return long[transfer][T_DST] < 0                      ' report completion status
+  
+PUB reada(transfer)
 
   long[transfer][T_RES] := 0                            ' result
   long[transfer][T_DST] &= $FFFF                        ' status
@@ -53,23 +57,13 @@ PUB bget(transfer, wait{boolean})
   head &= 7                                             ' (there is at most one transfer per client)
 
   lockclr(lock)                                         ' release lock
-
-  if wait
-    repeat
-    until long[transfer][T_DST] < 0                     ' wait for completion
-    result := long[transfer][T_RES]                     ' report result
     
-PUB complete(transfer)
-
-  return long[transfer][T_DST] < 0                      ' report completion status
-  
 PUB read(dst, src, length)
                                                         ' memory layout: result, parameters, local variables
-  return bget(@result, TRUE)                            ' synchronous read
-  
-PUB reada(transfer)
+  reada(@result)                                        ' asynchronous read
 
-  return bget(transfer, FALSE)                          ' asynchronous read
+  repeat
+  until dst < 0                                         ' wait for completion
   
 PRI task : length | mark, transfer, value
 
