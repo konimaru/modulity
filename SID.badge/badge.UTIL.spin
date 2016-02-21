@@ -2,8 +2,8 @@
 '' Parallax eBadge I2C high level device handler
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2016/02/19
-''       Version: 0.7
+'' Last modified: 2016/02/21
+''       Version: 0.8
 ''
 '' acknowledgements
 '' - MMA7660FC 3-Axis accelerometer interface, Copyright (c) 2015 Jon McPhalen
@@ -12,7 +12,7 @@
 CON
   res_m         = T_END                                 ' UI support
 
-  #0, T_DST, T_SRC, T_LEN, T_END
+  #0, T_RES, T_DST, T_SRC, T_LEN, T_END
   
 OBJ
   axis: "core.con.mma7660fc"
@@ -43,6 +43,9 @@ PUB init(SCL, SDA, base, layout) : n
   
 PUB bget(transfer, wait{boolean})
 
+  long[transfer][T_RES] := 0                            ' result
+  long[transfer][T_DST] &= $FFFF                        ' status
+
   repeat
   while lockset(lock)                                   ' acquire lock
 
@@ -53,15 +56,16 @@ PUB bget(transfer, wait{boolean})
 
   if wait
     repeat
-    while long[transfer][T_LEN] > 0                     ' wait for completion
+    until long[transfer][T_DST] < 0                     ' wait for completion
+    return long[transfer][T_RES]                        ' report result
     
 PUB complete(transfer)
 
-  return long[transfer][T_LEN] =< 0                     ' transfer size 0 or error -> done
+  return long[transfer][T_DST] < 0                      ' report completion status
   
 PUB read(dst, src, length)
-
-  return bget(@dst, TRUE)                               ' synchronous read
+                                                        ' memory layout: result, parameters, local variables
+  return bget(@result, TRUE)                            ' synchronous read
   
 PUB reada(transfer)
 
@@ -95,14 +99,16 @@ PRI task : length | mark, transfer, value
       if tail <> head                                   ' transfers available
         transfer := transfers[tail]                     ' grab active transfer
 
-        length := long[transfer][T_LEN] <# 2048
-        util.readBytes(prom#ID, long[transfer][T_SRC], long[transfer][T_DST], length)
+        if length := long[transfer][T_LEN] <# 2048
+          util.readBytes(prom#ID, long[transfer][T_SRC], long[transfer][T_DST], length)
 
-        long[transfer][T_DST] += length                 ' |       
-        long[transfer][T_SRC] += length                 ' update transfer
+          long[transfer][T_DST] += length               ' |       
+          long[transfer][T_SRC] += length               ' update transfer
+          long[transfer][T_RES] += length               ' |
         
         ifnot long[transfer][T_LEN] -= length
           tail := (tail + 1) & 7                        ' remove transfer
+          long[transfer][T_DST] |= NEGX                 ' mark complete
 
     while (cnt - mark) < clkfreq >> 2                             
 
