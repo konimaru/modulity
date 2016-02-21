@@ -57,7 +57,7 @@ PUB bget(transfer, wait{boolean})
   if wait
     repeat
     until long[transfer][T_DST] < 0                     ' wait for completion
-    return long[transfer][T_RES]                        ' report result
+    result := long[transfer][T_RES]                     ' report result
     
 PUB complete(transfer)
 
