@@ -208,7 +208,7 @@ PRI SID_task : now | delta                              ' audio background task
 
   delta := math.div(clkfreq >> 24, clkfreq << 8, trunc(sidcog#C64_CLOCK_FREQ))
 
-  SID_load($17573289|$8000)
+  SID_load($0c67597b|$8000)
 
   now := cnt
   repeat
@@ -216,18 +216,18 @@ PRI SID_task : now | delta                              ' audio background task
     waitcnt(now += (delta * word[$7D04]) >> 8)
     sidcog.updateRegisters($7F00)
 
-PRI SID_load(name) : load | addr, size, pcnt
+PRI SID_load(name) : load | addr, size, pcnt            ' stream loader
 
   size := name.word[1]                                  ' open resource
 
-  SID_bget(@name, @heap{0}, $16)                        ' read minimal header
+  name += util.read(@heap{0}, name, $16)                ' read minimal header
   load := SID_swap(heap.word[3])                        ' payload offset
-  SID_bget(@name, @heap.byte[$16], load - $16)          ' remainder
+  name += util.read(@heap.byte[$16], name, load - $16)  ' remainder
 
   size -= load                                          ' payload length
 
   ifnot load := SID_swap(heap.word[4])
-    SID_bget(@name, @load, 2)                           ' little endian load address
+    name += util.read(@load, name, 2)                   ' little endian load address
     size -= 2
 
   s_init[3] := heap.byte[11]
@@ -239,7 +239,7 @@ PRI SID_load(name) : load | addr, size, pcnt
   pcnt := (load.byte{0} + size + 255) & $FF00           ' covered pages (in bytes)
   addr := $7D00 - pcnt + load.byte{0}                   ' top pages are used for SID/CIA mapping
 
-  SID_bget(@name, addr, size)                           ' transfer payload
+ {name +=}util.read(addr, name, size)                   ' transfer payload
 
   core.bmap(load.byte[1], addr.byte[1], pcnt >> 8)      ' map payload
   core.pmap($D4, $7F)                                   ' map SID registers, shared with stack
@@ -252,16 +252,9 @@ PRI SID_load(name) : load | addr, size, pcnt
 
   SID_exec(@s_init)                                     ' initialise player
 
-  s_play[1] := heap.byte[13]                            
-  s_play[2] := heap.byte[12]                            ' swap(data.word[6])
+  s_play[1] := heap.byte[13]    {override init}         
+  s_play[2] := heap.byte[12]    {override init}         ' swap(data.word[6])
 
-PRI SID_bget(inst, buffer, length)                        
-
-  util.read(buffer, word[inst]{0}, length)
-
-  word[inst]{0} += length
-  word[inst][1] -= length
-  
 PRI SID_exec(locn)                                      ' 6502 connector
 
   mbox{0} := NEGX|locn
