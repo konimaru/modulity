@@ -1,7 +1,9 @@
 ''
 ''        Author: Marko Lukat
-'' Last modified: 2016/02/21
-''       Version: 0.11
+'' Last modified: 2016/04/18
+''       Version: 0.12
+''
+'' 20160418: initial release
 ''
 CON
   _clkmode = client#_clkmode
@@ -32,6 +34,8 @@ VAR
 
   long  xyzt, orientation, up, down
   long  stack[64]
+
+  long  scnt, selected
   
 PUB selftest : n | now
 
@@ -45,36 +49,35 @@ PUB selftest : n | now
       until draw.idle                  
       waitcnt(now += clkfreq/30)
       draw.cmdN(orientation, 2)
-      draw.swap(0)                     
+      draw.swap(0)
 
-PRI bg_0 : n | RGB, switched                            ' background task 0
+      updateLED
 
-  RGB := plex#BLUE
-  switched := TRUE
+PRI updateLED : n                                       ' establish PAD/LED link(s)
   
-  repeat
-    if pads & plex#PAD_P0                               ' right side
-      n |= plex#LED_B0
-    if pads & plex#PAD_P1
-      n |= plex#LED_B1
-    if pads & plex#PAD_P2
-      n |= plex#LED_B2   
+  if pads & plex#PAD_P0                                 ' right side
+    n |= plex#LED_B0
+  if pads & plex#PAD_P1
+    n |= plex#LED_B1
+  if pads & plex#PAD_P2
+    n |= plex#LED_B2     
 
-    if pads & plex#PAD_P3                               ' left side
-      n |= plex#LED_B3
-    if pads & plex#PAD_P4
-      n |= plex#LED_B4
-    if pads & plex#PAD_P5
-      n |= plex#LED_B5   
+  if pads & plex#PAD_P3                                 ' left side
+    n |= plex#LED_B3
+  if pads & plex#PAD_P4
+    n |= plex#LED_B4
+  if pads & plex#PAD_P5
+    n |= plex#LED_B5     
 
-    if pads & plex#PAD_P6                               ' logo
-      n |= %001001*RGB << 8
-      switched := FALSE
-    elseifnot switched
-      RGB := (++RGB & 7) #> 1
-      switched := TRUE
+  if pads & plex#PAD_P6                                 ' logo
+    ifnot selected~~
+      ifnot ++scnt & 7
+        ++scnt                                          ' skip black
+    n |= %001001*(scnt & 7) << 8
+  else
+    selected := FALSE
 
-    LEDs := n~                                          ' final LED update
+  LEDs := n                                             ' final LED update
 
 DAT                                                     ' display initialisation sequence
         byte    8
@@ -112,7 +115,6 @@ PRI init                                                ' driver/task initialisa
 ' background tasks
 
   cognew(SID_task, @stack{0})                           ' SID player
-' cognew(bg_0, @stack{$0})                              ' establish PAD/LED link(s)
   
 CON
   #-3, FS, SX, SY                                       ' sprite header indices
@@ -196,26 +198,35 @@ CON
   ESC      = 27
   
 VAR
-  long  mbox[core#res_m], heap[32]
+  long  mbox[core#res_m], heap[32], song[32]
+  long  sidx
+  
+PRI SID_task : now | delta, cold                        ' audio background task
 
-PRI SID_task : now | delta                              ' audio background task
-{
-000000 05630080 1c8805e3 101e226b 17573289
-000010 0f9b49e0 0c67597b 16dc65e2 00000000
-}
   repeat
   while mbox{0} < 0                                     ' startup complete
 
   delta := math.div(clkfreq >> 24, clkfreq << 8, trunc(sidcog#C64_CLOCK_FREQ))
 
-  SID_load($0c67597b|$8000)
+  util.read(@song{0}, $00808000, 128)                   ' load first 32 entries
+  if song{0}
+    repeat                                                                      
+      SID_load(song[sidx]|$8000)                        ' load song             
+      cold := scnt
+                                                                                
+      now := cnt                                                                
+      repeat                                                                    
+        SID_exec(@s_play)                               ' play song             
+        waitcnt(now += (delta * word[$7D04]) >> 8)                              
+        sidcog.updateRegisters($7F00)
+      while cold == scnt                   
 
-  now := cnt
-  repeat
-    SID_exec(@s_play)
-    waitcnt(now += (delta * word[$7D04]) >> 8)
-    sidcog.updateRegisters($7F00)
+      waitcnt(now += (delta * word[$7D04]) >> 8)        ' finish this cycle
+      sidcog.resetRegisters                             ' then silence
 
+      ifnot song[++sidx]                                ' next song available?
+        sidx := 0                                       ' wrap
+      
 PRI SID_load(name) : load | addr, size, pcnt            ' stream loader
 
   size := name.word[1]                                  ' open resource
