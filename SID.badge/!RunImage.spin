@@ -261,7 +261,7 @@ PRI SID_exec(locn)                                      ' 6502 connector
   repeat
   while mbox{0} < 0
 
-PRI SID_swap(value)                                       
+PRI SID_swap(value)                                     ' endianness support
 
   return value.byte{0} << 8 | value.byte[1]
   
