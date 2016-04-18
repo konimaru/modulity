@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
 '' Last modified: 2016/04/18
-''       Version: 0.12
+''       Version: 0.13
 ''
 '' 20160418: initial release
 ''
@@ -35,7 +35,7 @@ VAR
   long  xyzt, orientation, up, down
   long  stack[64]
 
-  long  scnt, selected
+  long  warm, selected
   
 PUB selftest : n | now
 
@@ -71,9 +71,9 @@ PRI updateLED : n                                       ' establish PAD/LED link
 
   if pads & plex#PAD_P6                                 ' logo
     ifnot selected~~
-      ifnot ++scnt & 7
-        ++scnt                                          ' skip black
-    n |= %001001*(scnt & 7) << 8
+      ifnot ++warm & 7
+        ++warm                                          ' skip black
+    n |= %001001*(warm & 7) << 8
   else
     selected := FALSE
 
@@ -212,17 +212,18 @@ PRI SID_task : now | delta, cold                        ' audio background task
   if song{0}
     repeat                                                                      
       SID_load(song[sidx]|$8000)                        ' load song             
-      cold := scnt
+      cold := warm
                                                                                 
       now := cnt                                                                
       repeat                                                                    
         SID_exec(@s_play)                               ' play song             
         waitcnt(now += (delta * word[$7D04]) >> 8)                              
         sidcog.updateRegisters($7F00)
-      while cold == scnt                   
+      while cold == warm                   
 
       waitcnt(now += (delta * word[$7D04]) >> 8)        ' finish this cycle
-      sidcog.resetRegisters                             ' then silence
+      bytefill($7F00, 0, 25)                            ' ...
+      sidcog.updateRegisters($7F00)                     ' then silence
 
       ifnot song[++sidx]                                ' next song available?
         sidx := 0                                       ' wrap
