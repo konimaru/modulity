@@ -1,7 +1,7 @@
 ''
 ''        Author: Marko Lukat
 '' Last modified: 2016/04/18
-''       Version: 0.13
+''       Version: 0.14
 ''
 '' 20160418: initial release
 ''
@@ -222,8 +222,7 @@ PRI SID_task : now | delta, cold                        ' audio background task
       while cold == warm                   
 
       waitcnt(now += (delta * word[$7D04]) >> 8)        ' finish this cycle
-      bytefill($7F00, 0, 25)                            ' ...
-      sidcog.updateRegisters($7F00)                     ' then silence
+      sidcog.resetRegisters                             ' then silence
 
       ifnot song[++sidx]                                ' next song available?
         sidx := 0                                       ' wrap
@@ -259,6 +258,8 @@ PRI SID_load(name) : load | addr, size, pcnt            ' stream loader
 
 ' core.pmap($01, $7F)                                   ' map stack (core enforces $7F), optional
 ' core.pmap($00, $7E)                                   ' map zpage (core enforces $7E), optional
+
+  bytefill($7F00, 0, 25)                                ' clear register bank
   
   word[$7D04] := lookupz(heap.byte[$15] & 1 : FREQ_VBL, FREQ_CIA)
 
