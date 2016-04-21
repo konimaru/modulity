@@ -213,7 +213,7 @@ PRI SID_task : now | delta, cold                        ' audio background task
     repeat                                                                      
       SID_load(song[sidx]|$8000)                        ' load song             
       cold := warm
-                                                                                
+
       now := cnt                                                                
       repeat                                                                    
         SID_exec(@s_play)                               ' play song             
@@ -224,7 +224,7 @@ PRI SID_task : now | delta, cold                        ' audio background task
       waitcnt(now += (delta * word[$7D04]) >> 8)        ' finish this cycle
       sidcog.resetRegisters                             ' then silence
 
-      ifnot song[++sidx]                                ' next song available?
+      ifnot song[sidx := (sidx +1) & 31]                ' next song available?
         sidx := 0                                       ' wrap
       
 PRI SID_load(name) : load | addr, size, pcnt            ' stream loader
